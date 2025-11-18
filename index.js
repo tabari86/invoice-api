@@ -22,10 +22,7 @@ let invoices = [
 app.use(express.json());
 
 // 5) Test-Route: GET /
-
-
 //    im Browser http://localhost:3000 aufrufst,
-
 app.get("/", (req, res) => {
   res.send("Invoice API läuft 🚀");
 });
@@ -73,6 +70,43 @@ app.post("/invoices", (req, res) => {
 
   // 201 = "Created"
   res.status(201).json(newInvoice);
+});
+
+// Rechnung aktualisieren (PUT)
+app.put("/invoices/:id", (req, res) => {
+  console.log("PUT-Route wurde aufgerufen mit ID:", req.params.id);
+
+  const id = parseInt(req.params.id, 10);
+
+  // Rechnung suchen
+  const invoice = invoices.find((inv) => inv.id === id);
+
+  if (!invoice) {
+    return res.status(404).json({ message: "Rechnung nicht gefunden" });
+  }
+
+  // Felder aus dem Body holen
+  const { customerName, amount, status } = req.body;
+
+  // Nur die Felder überschreiben, die wirklich gesendet wurden
+  if (typeof customerName === "string") {
+    invoice.customerName = customerName;
+  }
+
+  if (typeof amount === "number") {
+    invoice.amount = amount;
+  }
+
+  // optional: status nur bestimmten Werten erlauben
+  const allowedStatus = ["OPEN", "PAID", "CANCELLED"];
+  if (typeof status === "string" && allowedStatus.includes(status)) {
+    invoice.status = status;
+  }
+
+  res.json({
+    message: "Rechnung aktualisiert",
+    invoice,
+  });
 });
 
 // Rechnung löschen
