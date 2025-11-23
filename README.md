@@ -96,6 +96,11 @@ The initial in-memory implementation (simple array) has been refactored into a l
 
 This structure follows common Node.js/Express patterns used in real-world projects and improves maintainability, extensibility and testability.
 
+##  Tests (DE)
+
+Das Projekt verwendet Jest und Supertest, um die API-Endpunkte automatisiert zu prüfen.
+Die Tests laufen in einer eigenen MongoDB-Testdatenbank (.env.test) und beeinträchtigen deshalb niemals die echten Daten.
+
 ## Ausblick / Weiterentwicklung
 
 Geplante Erweiterungen:
@@ -103,7 +108,6 @@ Geplante Erweiterungen:
 MongoDB-Integration (persistente Speicherung)
 Struktur in Services/Controller aufteilen
 Request-Validierung mit Joi/Zod
-Unit- und Integrationstests
 Authentifizierung / API-Keys
 Docker-Support
 
