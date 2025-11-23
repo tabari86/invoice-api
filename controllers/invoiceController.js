@@ -1,4 +1,10 @@
+// controllers/invoiceController.js
+
 const Invoice = require("../models/invoice");
+const {
+  createInvoiceSchema,
+  updateInvoiceSchema,
+} = require("../validation/invoiceValidation");
 
 // Alle Rechnungen
 exports.getAllInvoices = async (req, res) => {
@@ -27,16 +33,22 @@ exports.getInvoiceById = async (req, res) => {
   }
 };
 
-// Neue Rechnung anlegen
+// Neue Rechnung anlegen (POST /invoices)
 exports.createInvoice = async (req, res) => {
   try {
-    const { customerName, amount } = req.body;
+    // ✅ Joi-Validierung
+    const { error, value } = createInvoiceSchema.validate(req.body, {
+      abortEarly: false,
+    });
 
-    if (!customerName || typeof amount !== "number") {
-      return res
-        .status(400)
-        .json({ message: "customerName und amount sind erforderlich" });
+    if (error) {
+      return res.status(400).json({
+        message: "Validierung fehlgeschlagen",
+        details: error.details.map((d) => d.message),
+      });
     }
+
+    const { customerName, amount } = value;
 
     const invoice = new Invoice({
       customerName,
@@ -51,10 +63,22 @@ exports.createInvoice = async (req, res) => {
   }
 };
 
-// Rechnung aktualisieren
+// Rechnung aktualisieren (PUT /invoices/:id)
 exports.updateInvoice = async (req, res) => {
   try {
-    const { customerName, amount, status } = req.body;
+    // ✅ Joi-Validierung
+    const { error, value } = updateInvoiceSchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        message: "Validierung fehlgeschlagen",
+        details: error.details.map((d) => d.message),
+      });
+    }
+
+    const { customerName, amount, status } = value;
 
     const allowedStatus = ["OPEN", "PAID", "CANCELLED"];
     const updateData = {};
@@ -89,7 +113,7 @@ exports.updateInvoice = async (req, res) => {
   }
 };
 
-// Rechnung löschen
+// Rechnung löschen (DELETE /invoices/:id)
 exports.deleteInvoice = async (req, res) => {
   try {
     const deleted = await Invoice.findByIdAndDelete(req.params.id);

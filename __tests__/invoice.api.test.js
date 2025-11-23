@@ -86,4 +86,48 @@ describe("Invoice API", () => {
     expect(response.body.invoice.amount).toBe(99.99);
     expect(response.body.invoice.status).toBe("PAID");
   });
+
+  it("PUT /invoices/:id sollte eine Rechnung aktualisieren", async () => {
+    // Zuerst eine Rechnung in der Test-DB anlegen
+    const created = await Invoice.create({
+      customerName: "Alter Kunde",
+      amount: 50,
+      status: "OPEN",
+    });
+
+    const updateData = {
+      customerName: "Aktualisierter Kunde",
+      amount: 99.99,
+      status: "PAID",
+    };
+
+    const response = await request(app)
+      .put(`/invoices/${created._id}`)
+      .send(updateData);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("invoice");
+    expect(response.body.invoice.customerName).toBe(updateData.customerName);
+    expect(response.body.invoice.amount).toBe(updateData.amount);
+    expect(response.body.invoice.status).toBe(updateData.status);
+  });
+
+  it("DELETE /invoices/:id sollte eine Rechnung löschen", async () => {
+    // 1) Eine Testrechnung anlegen
+    const created = await Invoice.create({
+      customerName: "Löschkunde",
+      amount: 999.99,
+    });
+
+    // 2) DELETE-Request ausführen
+    const response = await request(app).delete(`/invoices/${created._id}`);
+
+    // 3) Erwartung: erfolgreiche Löschung
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message", "Rechnung gelöscht");
+
+    // 4) Sicherstellen, dass sie wirklich nicht mehr existiert
+    const check = await Invoice.findById(created._id);
+    expect(check).toBeNull();
+  });
 });

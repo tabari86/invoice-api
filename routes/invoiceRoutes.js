@@ -1,6 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const invoiceController = require("../controllers/invoiceController");
+const {
+  createInvoiceSchema,
+  updateInvoiceSchema,
+} = require("../validation/invoiceValidation");
+
+// Middleware für Validation
+function validate(schema) {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        message: "Validierungsfehler",
+        details: error.details.map((d) => d.message),
+      });
+    }
+    next();
+  };
+}
 
 // /invoices/
 router.get("/", invoiceController.getAllInvoices);
@@ -8,13 +26,21 @@ router.get("/", invoiceController.getAllInvoices);
 // /invoices/:id
 router.get("/:id", invoiceController.getInvoiceById);
 
-// /invoices/
-router.post("/", invoiceController.createInvoice);
+// POST mit Validation
+router.post(
+  "/",
+  validate(createInvoiceSchema),
+  invoiceController.createInvoice
+);
 
-// /invoices/:id
-router.put("/:id", invoiceController.updateInvoice);
+// PUT mit Validation
+router.put(
+  "/:id",
+  validate(updateInvoiceSchema),
+  invoiceController.updateInvoice
+);
 
-// /invoices/:id
+// DELETE
 router.delete("/:id", invoiceController.deleteInvoice);
 
 module.exports = router;
