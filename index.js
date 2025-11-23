@@ -1,6 +1,14 @@
 // index.js
 
-require("dotenv").config();
+const path = require("path");
+
+// je nach Umgebung die richtige .env-Datei laden
+const envFile = process.env.NODE_ENV === "test" ? ".env.test" : ".env";
+
+require("dotenv").config({
+  path: path.resolve(__dirname, envFile),
+});
+
 const express = require("express");
 const mongoose = require("mongoose");
 const invoiceRoutes = require("./routes/invoiceRoutes");
@@ -25,11 +33,17 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => {
     console.log("✅ Mit MongoDB verbunden");
-    app.listen(PORT, () => {
-      console.log(` Server läuft auf http://localhost:${PORT}`);
-    });
+
+    // Server nur starten, wenn wir NICHT im Test-Modus sind
+    if (process.env.NODE_ENV !== "test") {
+      app.listen(PORT, () => {
+        console.log(`Server läuft auf http://localhost:${PORT}`);
+      });
+    }
   })
   .catch((err) => {
-    console.error("Konnte nicht mit MongoDB verbinden:", err);
+    console.error("Fehler bei Mongo-Verbindung:", err.message);
     process.exit(1);
   });
+
+module.exports = app;

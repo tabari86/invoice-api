@@ -1,5 +1,3 @@
-// controllers/invoiceController.js
-
 const Invoice = require("../models/invoice");
 
 // Alle Rechnungen
