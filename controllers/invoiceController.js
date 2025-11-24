@@ -1,15 +1,9 @@
-// controllers/invoiceController.js
-
-const Invoice = require("../models/invoice");
-const {
-  createInvoiceSchema,
-  updateInvoiceSchema,
-} = require("../validation/invoiceValidation");
+const invoiceService = require("../services/invoiceService");
 
 // Alle Rechnungen
 exports.getAllInvoices = async (req, res) => {
   try {
-    const invoices = await Invoice.find().sort({ createdAt: -1 });
+    const invoices = await invoiceService.getAllInvoices();
     res.json(invoices);
   } catch (err) {
     console.error("Fehler bei getAllInvoices:", err);
@@ -20,7 +14,7 @@ exports.getAllInvoices = async (req, res) => {
 // Eine Rechnung nach ID
 exports.getInvoiceById = async (req, res) => {
   try {
-    const invoice = await Invoice.findById(req.params.id);
+    const invoice = await invoiceService.getInvoiceById(req.params.id);
 
     if (!invoice) {
       return res.status(404).json({ message: "Rechnung nicht gefunden" });
@@ -29,33 +23,22 @@ exports.getInvoiceById = async (req, res) => {
     res.json(invoice);
   } catch (err) {
     console.error("Fehler bei getInvoiceById:", err);
+    // z.B. ungültige ObjectId
     res.status(400).json({ message: "Ungültige ID" });
   }
 };
 
-// Neue Rechnung anlegen (POST /invoices)
+// Neue Rechnung anlegen
 exports.createInvoice = async (req, res) => {
   try {
-    // ✅ Joi-Validierung
-    const { error, value } = createInvoiceSchema.validate(req.body, {
-      abortEarly: false,
-    });
+    // Body ist bereits durch Joi (validateRequest) geprüft
+    const { customerName, amount } = req.body;
 
-    if (error) {
-      return res.status(400).json({
-        message: "Validierung fehlgeschlagen",
-        details: error.details.map((d) => d.message),
-      });
-    }
-
-    const { customerName, amount } = value;
-
-    const invoice = new Invoice({
+    const saved = await invoiceService.createInvoice({
       customerName,
       amount,
     });
 
-    const saved = await invoice.save();
     res.status(201).json(saved);
   } catch (err) {
     console.error("Fehler bei createInvoice:", err);
@@ -63,24 +46,12 @@ exports.createInvoice = async (req, res) => {
   }
 };
 
-// Rechnung aktualisieren (PUT /invoices/:id)
+// Rechnung aktualisieren
 exports.updateInvoice = async (req, res) => {
   try {
-    // ✅ Joi-Validierung
-    const { error, value } = updateInvoiceSchema.validate(req.body, {
-      abortEarly: false,
-    });
+    // Body wurde schon von Joi validiert (updateInvoiceSchema)
+    const { customerName, amount, status } = req.body;
 
-    if (error) {
-      return res.status(400).json({
-        message: "Validierung fehlgeschlagen",
-        details: error.details.map((d) => d.message),
-      });
-    }
-
-    const { customerName, amount, status } = value;
-
-    const allowedStatus = ["OPEN", "PAID", "CANCELLED"];
     const updateData = {};
 
     if (typeof customerName === "string") {
@@ -91,13 +62,14 @@ exports.updateInvoice = async (req, res) => {
       updateData.amount = amount;
     }
 
-    if (typeof status === "string" && allowedStatus.includes(status)) {
+    if (typeof status === "string") {
       updateData.status = status;
     }
 
-    const updated = await Invoice.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    });
+    const updated = await invoiceService.updateInvoice(
+      req.params.id,
+      updateData
+    );
 
     if (!updated) {
       return res.status(404).json({ message: "Rechnung nicht gefunden" });
@@ -113,10 +85,10 @@ exports.updateInvoice = async (req, res) => {
   }
 };
 
-// Rechnung löschen (DELETE /invoices/:id)
+// Rechnung löschen
 exports.deleteInvoice = async (req, res) => {
   try {
-    const deleted = await Invoice.findByIdAndDelete(req.params.id);
+    const deleted = await invoiceService.deleteInvoice(req.params.id);
 
     if (!deleted) {
       return res.status(404).json({ message: "Rechnung nicht gefunden" });
