@@ -1,9 +1,35 @@
 const invoiceService = require("../services/invoiceService");
 
-// Alle Rechnungen
+// Alle Rechnungen – optional mit Filtern
 exports.getAllInvoices = async (req, res) => {
   try {
-    const invoices = await invoiceService.getAllInvoices();
+    const { status, from, to, minAmount, maxAmount } = req.query;
+
+    const filters = {};
+
+    if (status) {
+      filters.status = status;
+    }
+    if (from) {
+      filters.from = from;
+    }
+    if (to) {
+      filters.to = to;
+    }
+    if (minAmount) {
+      const parsed = Number(minAmount);
+      if (!Number.isNaN(parsed)) {
+        filters.minAmount = parsed;
+      }
+    }
+    if (maxAmount) {
+      const parsed = Number(maxAmount);
+      if (!Number.isNaN(parsed)) {
+        filters.maxAmount = parsed;
+      }
+    }
+
+    const invoices = await invoiceService.getAllInvoices(filters);
     res.json(invoices);
   } catch (err) {
     console.error("Fehler bei getAllInvoices:", err);
@@ -23,7 +49,6 @@ exports.getInvoiceById = async (req, res) => {
     res.json(invoice);
   } catch (err) {
     console.error("Fehler bei getInvoiceById:", err);
-    // z.B. ungültige ObjectId
     res.status(400).json({ message: "Ungültige ID" });
   }
 };
@@ -31,15 +56,14 @@ exports.getInvoiceById = async (req, res) => {
 // Neue Rechnung anlegen
 exports.createInvoice = async (req, res) => {
   try {
-    // Body ist bereits durch Joi (validateRequest) geprüft
     const { customerName, amount } = req.body;
 
-    const saved = await invoiceService.createInvoice({
+    const newInvoice = await invoiceService.createInvoice({
       customerName,
       amount,
     });
 
-    res.status(201).json(saved);
+    res.status(201).json(newInvoice);
   } catch (err) {
     console.error("Fehler bei createInvoice:", err);
     res.status(500).json({ message: "Interner Serverfehler" });
@@ -49,9 +73,9 @@ exports.createInvoice = async (req, res) => {
 // Rechnung aktualisieren
 exports.updateInvoice = async (req, res) => {
   try {
-    // Body wurde schon von Joi validiert (updateInvoiceSchema)
     const { customerName, amount, status } = req.body;
 
+    const allowedStatus = ["OPEN", "PAID", "CANCELLED"];
     const updateData = {};
 
     if (typeof customerName === "string") {
@@ -62,7 +86,7 @@ exports.updateInvoice = async (req, res) => {
       updateData.amount = amount;
     }
 
-    if (typeof status === "string") {
+    if (typeof status === "string" && allowedStatus.includes(status)) {
       updateData.status = status;
     }
 

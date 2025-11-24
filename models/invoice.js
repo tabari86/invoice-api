@@ -12,11 +12,22 @@ const invoiceSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
   },
   {
-    versionKey: false, // kein __v-Feld
+    versionKey: false,
   }
 );
 
-// Wichtig: hier wird das Modell registriert und exportiert
+/**
+ * Indexe für häufige Abfragen:
+ * - nach Status und Datum (alle OPEN-Rechnungen, sortiert nach Datum)
+ */
+invoiceSchema.index({ status: 1, createdAt: -1 });
+
+/**
+ * schneller Zugriff auf neueste Rechnungen allgemein
+ */
+// invoiceSchema.index({ createdAt: -1 });
+
+// Modell registrieren
 const Invoice = mongoose.model("Invoice", invoiceSchema);
 
 module.exports = Invoice;

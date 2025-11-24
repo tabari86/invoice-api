@@ -1,0 +1,20 @@
+# Node-Abhängigkeiten (werden im Container neu installiert)
+node_modules
+npm-debug.log
+
+# Git & Meta
+.git
+.gitignore
+
+# Docker-Dateien
+Dockerfile
+.dockerignore
+
+# Tests & Coverage
+__tests__
+coverage
+
+# Sonstige Dateien, die im Image nicht nötig sind
+README.md
+.env
+.env.test

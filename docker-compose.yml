@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: invoice-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: "production"
+      MONGODB_URI: "mongodb://mongo:27017/invoice-api"
+      API_KEY: "supergeheimer-api-key" # gleich wie in deiner .env
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    container_name: invoice-mongo
+    restart: always
+    ports:
+      - "27018:27017" # außen 27018 (Windows) -> im Container 27017
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
