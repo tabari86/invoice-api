@@ -101,6 +101,55 @@ This structure follows common Node.js/Express patterns used in real-world projec
 Das Projekt verwendet Jest und Supertest, um die API-Endpunkte automatisiert zu prüfen.
 Die Tests laufen in einer eigenen MongoDB-Testdatenbank (.env.test) und beeinträchtigen deshalb niemals die echten Daten.
 
+## Docker & Deployment
+Dieses Projekt kann sowohl lokal (Node.js direkt) als auch vollständig in Docker ausgeführt werden.
+
+ # Voraussetzungen
+Docker Desktop installiert (Windows / macOS)
+Docker Compose verfügbar
+Lokale Entwicklung (ohne Docker)
+
+# Abhängigkeiten installieren
+npm install
+
+# Entwicklung mit lokaler MongoDB
+node index.js
+# oder
+npm start
+
+Die API ist dann unter:
+
+http://localhost:3000/invoices erreichbar.
+
+# Ausführung mit Docker & docker-compose
+
+Im Projektordner:
+docker-compose up --build
+Dadurch werden:
+# API-Container (Node.js) gestartet
+# MongoDB-Container gestartet
+
+die Verbindung erfolgt intern über die Connection-URL:
+
+# MONGODB_URI=mongodb://mongo:27017/invoice-api
+
+Nach dem Start ist die API wieder unter:
+
+http://localhost:3000/invoices von außen erreichbar.
+
+# Container stoppen:
+docker-compose down
+
+# Typischer Workflow
+
+Lokales Entwickeln, Testen & Debuggen mit:
+npm test
+npm start
+
+Für Demo / Deployment / GitHub-Showcase:
+docker-compose up --build
+
+
 ## Ausblick / Weiterentwicklung
 
 Geplante Erweiterungen:
@@ -109,7 +158,7 @@ MongoDB-Integration (persistente Speicherung)
 Struktur in Services/Controller aufteilen
 Request-Validierung mit Joi/Zod
 Authentifizierung / API-Keys
-Docker-Support
+
 
 Dieses Projekt dient bewusst als solide Basis.
 
