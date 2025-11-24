@@ -1,8 +1,8 @@
-// __tests__/invoice.api.test.js
-
 const request = require("supertest");
 const mongoose = require("mongoose");
 const app = require("../index");
+
+// HIER ändern:
 const Invoice = require("../models/invoice");
 
 describe("Invoice API", () => {

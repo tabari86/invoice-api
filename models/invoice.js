@@ -16,6 +16,7 @@ const invoiceSchema = new mongoose.Schema(
   }
 );
 
+// Wichtig: hier wird das Modell registriert und exportiert
 const Invoice = mongoose.model("Invoice", invoiceSchema);
 
 module.exports = Invoice;
