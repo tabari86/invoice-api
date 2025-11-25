@@ -189,15 +189,11 @@ The API includes centralized logging and basic rate limiting:
   - In test mode (`NODE_ENV=test`) limits are relaxed to not interfere with automated tests  
   - In production the limits can be tuned via configuration
 
+- Swagger / OpenAPI-Dokumentation für die Invoice-API eingebunden (/docs)
+- Monitoring-Routen /monitor/health und /monitor/metrics hinzugefügt
+- Zentrales Logger-Utility mit Log-Level-Steuerung und einheitlichem Log-Format implementiert
+- Bestehende Jest- und Supertest-Tests laufen weiterhin grün
 
-## Ausblick / Weiterentwicklung
-
-Geplante Erweiterungen:
-
-MongoDB-Integration (persistente Speicherung)
-Struktur in Services/Controller aufteilen
-Request-Validierung mit Joi/Zod
-Authentifizierung / API-Keys
 
 
 Dieses Projekt dient bewusst als solide Basis.
