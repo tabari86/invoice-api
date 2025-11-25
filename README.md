@@ -149,6 +149,46 @@ npm start
 Für Demo / Deployment / GitHub-Showcase:
 docker-compose up --build
 
+### Logging & Rate Limiting
+
+The API includes centralized logging and basic rate limiting:
+
+- **Centralized logging (`utils/logger.js`)**  
+  - Unified log format with timestamp and log level (INFO, ERROR, etc.)  
+  - Used in `index.js`, `invoiceController.js` and the `requestLogger` middleware  
+  - HTTP requests are logged with method, path, status code and response time  
+  - Ready to be extended with file logging, log streaming, or external monitoring tools
+
+- **HTTP request logging (`middleware/requestLogger.js`)**  
+  - Every incoming request is logged before being processed  
+  - Useful for debugging and tracing API calls
+
+- **Rate limiting (`middleware/rateLimiter.js`)**  
+  - **Global limiter** for all incoming requests (basic DoS/abuse protection)  
+  - **Stricter write limiter** for `POST`, `PUT`, `DELETE` requests on `/invoices`  
+  - In test mode (`NODE_ENV=test`) limits are relaxed to not interfere with automated tests  
+  - In production the limits can be tuned via configuration
+ 
+    ### Logging & Rate Limiting (EN)
+
+The API includes centralized logging and basic rate limiting:
+
+- **Centralized logging (`utils/logger.js`)**  
+  - Unified log format with timestamp and log level (INFO, ERROR, etc.)  
+  - Used in `index.js`, `invoiceController.js` and the `requestLogger` middleware  
+  - HTTP requests are logged with method, path, status code and response time  
+  - Ready to be extended with file logging, log streaming, or external monitoring tools
+
+- **HTTP request logging (`middleware/requestLogger.js`)**  
+  - Every incoming request is logged before being processed  
+  - Useful for debugging and tracing API calls
+
+- **Rate limiting (`middleware/rateLimiter.js`)**  
+  - **Global limiter** for all incoming requests (basic DoS/abuse protection)  
+  - **Stricter write limiter** for `POST`, `PUT`, `DELETE` requests on `/invoices`  
+  - In test mode (`NODE_ENV=test`) limits are relaxed to not interfere with automated tests  
+  - In production the limits can be tuned via configuration
+
 
 ## Ausblick / Weiterentwicklung
 
