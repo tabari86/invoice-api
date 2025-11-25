@@ -1,3 +1,5 @@
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./swagger/swagger.json");
 const path = require("path");
 
 // je nach Umgebung die richtige .env-Datei laden
@@ -32,6 +34,9 @@ app.use(requestLogger);
 app.get("/", (req, res) => {
   res.send("Invoice API mit MongoDB, Tests & professionellem Logging läuft 🚀");
 });
+
+// Swagger UI unter /api-docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // alle Invoice-Routen unter /invoices
 app.use("/invoices", invoiceRoutes);

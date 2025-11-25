@@ -1,0 +1,139 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Invoice API",
+    "version": "1.0.0",
+    "description": "REST API für Rechnungen – mit MongoDB, Tests, Logging, Rate Limiting und Docker-Support."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Lokale Entwicklung"
+    }
+  ],
+  "paths": {
+    "/invoices": {
+      "get": {
+        "summary": "Alle Rechnungen abrufen",
+        "responses": {
+          "200": {
+            "description": "Liste aller Rechnungen"
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Rechnung erstellen",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rechnung erfolgreich erstellt"
+          }
+        }
+      }
+    },
+
+    "/invoices/{id}": {
+      "get": {
+        "summary": "Rechnung per ID abrufen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rechnung gefunden"
+          }
+        }
+      },
+      "put": {
+        "summary": "Rechnung aktualisieren",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rechnung erfolgreich aktualisiert"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Rechnung löschen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rechnung wurde gelöscht"
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "InvoiceCreate": {
+        "type": "object",
+        "required": ["customerName", "amount"],
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "example": "MT Intelligence"
+          },
+          "amount": {
+            "type": "number",
+            "example": 199.99
+          }
+        }
+      },
+
+      "InvoiceUpdate": {
+        "type": "object",
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "example": "Update Kunde"
+          },
+          "amount": {
+            "type": "number",
+            "example": 300.0
+          },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "PAID", "CANCELLED"],
+            "example": "PAID"
+          }
+        }
+      }
+    }
+  }
+}
