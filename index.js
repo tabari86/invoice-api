@@ -1,6 +1,13 @@
+const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger/swagger.json");
 const path = require("path");
+const monitorRoutes = require("./routes/monitorRoutes");
+const mongoose = require("mongoose");
+const invoiceRoutes = require("./routes/invoiceRoutes");
+const { globalLimiter } = require("./middleware/rateLimiter");
+const logger = require("./utils/logger");
+const requestLogger = require("./middleware/requestLogger");
 
 // je nach Umgebung die richtige .env-Datei laden
 const envFile = process.env.NODE_ENV === "test" ? ".env.test" : ".env";
@@ -8,14 +15,6 @@ const envFile = process.env.NODE_ENV === "test" ? ".env.test" : ".env";
 require("dotenv").config({
   path: path.resolve(__dirname, envFile),
 });
-
-const express = require("express");
-const mongoose = require("mongoose");
-const invoiceRoutes = require("./routes/invoiceRoutes");
-const { globalLimiter } = require("./middleware/rateLimiter");
-
-const logger = require("./utils/logger");
-const requestLogger = require("./middleware/requestLogger");
 
 const app = express();
 
@@ -40,6 +39,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // alle Invoice-Routen unter /invoices
 app.use("/invoices", invoiceRoutes);
+
+// Monitoring-Routen unter /monitor
+app.use("/monitor", monitorRoutes);
 
 // MongoDB verbinden und Server starten
 mongoose

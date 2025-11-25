@@ -1,33 +1,39 @@
-// Ein sehr einfacher Logger-Wrapper um console.log / console.error
-// So können wir später leicht auf ein "echtes" Logging-Tool wechseln (z.B. pino, winston)
+const levels = ["debug", "info", "warn", "error"];
 
-function formatMessage(level, message, meta) {
-  const timestamp = new Date().toISOString();
+// Standard-Log-Level (kannst du z.B. über .env setzen: LOG_LEVEL=debug)
+const currentLevel = process.env.LOG_LEVEL || "info";
 
-  // Falls meta-Objekt mitgegeben wird, hängen wir es an
-  if (meta) {
-    return `[${timestamp}] [${level}] ${message} | ${JSON.stringify(meta)}`;
+function shouldLog(level) {
+  const currentIndex = levels.indexOf(currentLevel);
+  const levelIndex = levels.indexOf(level);
+  if (currentIndex === -1 || levelIndex === -1) {
+    // Fallback: wenn etwas komisch ist, lieber loggen als schweigen
+    return true;
   }
-
-  return `[${timestamp}] [${level}] ${message}`;
+  return levelIndex >= currentIndex;
 }
 
-const logger = {
-  info(message, meta) {
-    console.log(formatMessage("INFO", message, meta));
-  },
+function log(level, message) {
+  if (!shouldLog(level)) return;
 
-  error(message, meta) {
-    console.error(formatMessage("ERROR", message, meta));
-  },
+  const timestamp = new Date().toISOString();
+  const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
 
-  warn(message, meta) {
-    console.warn(formatMessage("WARN", message, meta));
-  },
+  // einfache Variante: alles auf stdout
+  // (später könnte man hier z.B. in Dateien schreiben oder nach Loki/ELK schicken)
+  // falls message ein Objekt ist, schön formatieren
+  if (message instanceof Error) {
+    console.log(`${prefix} ${message.message}\n${message.stack}`);
+  } else if (typeof message === "object") {
+    console.log(`${prefix} ${JSON.stringify(message)}`);
+  } else {
+    console.log(`${prefix} ${message}`);
+  }
+}
 
-  debug(message, meta) {
-    console.debug(formatMessage("DEBUG", message, meta));
-  },
+module.exports = {
+  debug: (msg) => log("debug", msg),
+  info: (msg) => log("info", msg),
+  warn: (msg) => log("warn", msg),
+  error: (msg) => log("error", msg),
 };
-
-module.exports = logger;
