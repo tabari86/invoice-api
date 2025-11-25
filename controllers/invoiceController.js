@@ -1,4 +1,5 @@
 const invoiceService = require("../services/invoiceService");
+const logger = require("../utils/logger");
 
 // Alle Rechnungen – optional mit Filtern
 exports.getAllInvoices = async (req, res) => {
@@ -32,7 +33,7 @@ exports.getAllInvoices = async (req, res) => {
     const invoices = await invoiceService.getAllInvoices(filters);
     res.json(invoices);
   } catch (err) {
-    console.error("Fehler bei getAllInvoices:", err);
+    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
     res.status(500).json({ message: "Interner Serverfehler" });
   }
 };
@@ -48,7 +49,7 @@ exports.getInvoiceById = async (req, res) => {
 
     res.json(invoice);
   } catch (err) {
-    console.error("Fehler bei getInvoiceById:", err);
+    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
     res.status(400).json({ message: "Ungültige ID" });
   }
 };
@@ -65,7 +66,7 @@ exports.createInvoice = async (req, res) => {
 
     res.status(201).json(newInvoice);
   } catch (err) {
-    console.error("Fehler bei createInvoice:", err);
+    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
     res.status(500).json({ message: "Interner Serverfehler" });
   }
 };
@@ -104,7 +105,7 @@ exports.updateInvoice = async (req, res) => {
       invoice: updated,
     });
   } catch (err) {
-    console.error("Fehler bei updateInvoice:", err);
+    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
     res.status(400).json({ message: "Ungültige ID oder Daten" });
   }
 };
@@ -123,7 +124,7 @@ exports.deleteInvoice = async (req, res) => {
       invoice: deleted,
     });
   } catch (err) {
-    console.error("Fehler bei deleteInvoice:", err);
+    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
     res.status(400).json({ message: "Ungültige ID" });
   }
 };

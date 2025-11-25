@@ -1,5 +1,3 @@
-// index.js
-
 const path = require("path");
 
 // je nach Umgebung die richtige .env-Datei laden
@@ -12,17 +10,27 @@ require("dotenv").config({
 const express = require("express");
 const mongoose = require("mongoose");
 const invoiceRoutes = require("./routes/invoiceRoutes");
+const { globalLimiter } = require("./middleware/rateLimiter");
+
+const logger = require("./utils/logger");
+const requestLogger = require("./middleware/requestLogger");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+// Body-Parsing
 app.use(express.json());
+// Globales Rate-Limit für alle Requests
+app.use(globalLimiter);
+
+// 🔹 NEU: HTTP-Request-Logging (muss VOR den Routen kommen)
+app.use(requestLogger);
 
 // einfache Health-Route
 app.get("/", (req, res) => {
-  res.send("Invoice API mit MongoDB & strukturierter Architektur läuft 🚀");
+  res.send("Invoice API mit MongoDB, Tests & professionellem Logging läuft 🚀");
 });
 
 // alle Invoice-Routen unter /invoices
@@ -32,17 +40,17 @@ app.use("/invoices", invoiceRoutes);
 mongoose
   .connect(MONGODB_URI)
   .then(() => {
-    console.log("✅ Mit MongoDB verbunden");
+    logger.info("✅ Mit MongoDB verbunden");
 
     // Server nur starten, wenn wir NICHT im Test-Modus sind
     if (process.env.NODE_ENV !== "test") {
       app.listen(PORT, () => {
-        console.log(`Server läuft auf http://localhost:${PORT}`);
+        logger.info(`Server läuft auf http://localhost:${PORT}`);
       });
     }
   })
   .catch((err) => {
-    console.error("Fehler bei Mongo-Verbindung:", err.message);
+    logger.error(`Fehler bei Mongo-Verbindung: ${err.message}`);
     process.exit(1);
   });
 
