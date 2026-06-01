@@ -1,208 +1,230 @@
-# invoice-api
-Über das Projekt
+# Invoice API
 
-Dieses Projekt ist eine modular aufgebaute und bewusst schlank gehaltene REST-API zur Verwaltung von Rechnungen.
-Der Fokus liegt auf einem klaren, nachvollziehbaren Codeaufbau, wie er in realen Backend-Projekten üblich ist.
-Die API bietet eine vollständige CRUD-Implementierung und dient als Grundlage für weiterführende Features wie Datenbank-Integration, Benutzerverwaltung oder API-Security.
-Das Projekt eignet sich gut, um Backend-Grundlagen sauber zu demonstrieren und wird aktiv weiterentwickelt.
+![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=nodedotjs)
+![Express](https://img.shields.io/badge/Express-API-black?logo=express)
+![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-green?logo=mongodb)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
+![Jest](https://img.shields.io/badge/Tests-Passing-success?logo=jest)
+![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)
 
- ## Ziele & Motivation
+A production-oriented REST API for invoice management built with Node.js, Express, MongoDB, Docker and Swagger.
 
-Dieses Projekt wurde entwickelt, um:
-Backend-Strukturen realistisch abzubilden
-saubere REST-Architektur zu zeigen
-API-Design für Bewerbungen zu demonstrieren
-eine Basis für zukünftige Erweiterungen (MongoDB, Auth, Services) zu schaffen
-Node.js, Express und API-Routing strukturiert einzusetzen
+---
+
+## About the Project
+
+Invoice API is a backend service that demonstrates modern REST API development practices.
+
+The application provides full CRUD functionality for invoice management and includes features commonly used in real-world backend systems such as:
+
+- REST API architecture
+- MongoDB & Mongoose integration
+- Swagger / OpenAPI documentation
+- Automated testing with Jest & Supertest
+- Docker containerization
+- Request logging
+- Rate limiting
+- Monitoring endpoints
+- Centralized error handling
+- MVC architecture
+
+The project was built as a portfolio project to showcase backend engineering skills and production-ready API design.
+
+---
+
+## Swagger Documentation
+
+Swagger UI is available after starting the application:
+
+```bash
+http://localhost:3000/docs
+```
+
+### Swagger Preview
+
+![Swagger UI](docs/swagger-ui.png)
+
+---
 
 ## Features
 
-Vollständige CRUD-Funktionalität:
-GET /invoices
-GET /invoices/:id
-POST /invoices
-PUT /invoices/:id
-DELETE /invoices/:id
-Sauberes Error-Handling
-Express Middleware für JSON-Parsing
-Struktur wie im realen Entwicklungsalltag
-Erweiterbar (MongoDB, Services, Auth, Validation, Logging) 
+| Feature | Description |
+|----------|-------------|
+| CRUD API | Create, Read, Update and Delete invoices |
+| MongoDB | Persistent invoice storage |
+| Swagger | Interactive API documentation |
+| Docker | Containerized deployment |
+| Logging | Centralized request logging |
+| Rate Limiting | Basic API protection |
+| Monitoring | Health and metrics endpoints |
+| Validation | Request validation support |
+| Automated Tests | Jest & Supertest integration |
 
-## Technologien
+---
 
-Node.js
-Express.js
-JavaScript (ES6+)
-REST-API Architektur
+## Tech Stack
 
-## Installation & Setup
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- Docker
+- Jest
+- Supertest
+- Swagger / OpenAPI
 
-1. Projekt klonen
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /invoices | Get all invoices |
+| GET | /invoices/:id | Get invoice by ID |
+| POST | /invoices | Create invoice |
+| PUT | /invoices/:id | Update invoice |
+| DELETE | /invoices/:id | Delete invoice |
+
+---
+
+## Project Structure
+
+```text
+invoice-api/
+│
+├── controllers/
+├── docs/
+├── middleware/
+├── models/
+├── routes/
+├── services/
+├── swagger/
+├── tests/
+├── utils/
+│
+├── Dockerfile
+├── package.json
+├── index.js
+└── README.md
+```
+
+---
+
+## Environment Variables
+
+Create a `.env` file:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://127.0.0.1:27017/invoice-api
+API_KEY=your_api_key_here
+```
+
+### Test Environment
+
+The repository contains a dedicated `.env.test` configuration that uses local test values only:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/invoice-api-test
+PORT=3001
+API_KEY=test-api-key
+```
+
+No production credentials are stored in the repository.
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
 git clone https://github.com/tabari86/invoice-api.git
 cd invoice-api
+```
 
-2. Abhängigkeiten installieren
+Install dependencies:
+
+```bash
 npm install
+```
 
-3. Server starten
-node index.js
+---
 
-Der Server läuft auf:
+## Start Application
+
+Development mode:
+
+```bash
+npm start
+```
+
+Application runs on:
+
+```bash
 http://localhost:3000
+```
 
-## API Endpunkte
-📌 Alle Rechnungen abrufen
-GET /invoices
+---
 
-📌 Rechnung per ID abrufen
-GET /invoices/:id
+## Run Tests
 
-📌 Neue Rechnung erstellen
-POST /invoices
-Body (JSON-Beispiel):
-{
-  "customerName": "MT Intelligence",
-  "amount": 250.50
-}
-
-📌 Rechnung aktualisieren
-PUT /invoices/:id
-
-📌 Rechnung löschen
-DELETE /invoices/:id
-
-## Datenbank & Architektur
-
-Die API verwendet MongoDB als persistente Datenbank und Mongoose als ODM-Schicht.  
-Die ursprüngliche In-Memory-Variante (Array) wurde durch ein sauberes Schichtenmodell ersetzt:
-
-- `models/` – Mongoose Models (z.B. `Invoice`)
-- `controllers/` – Businesslogik und Request-Handling
-- `routes/` – Express-Routing, Zuordnung von URLs zu Controllern
-- `index.js` – Anwendungseintritt, Verbindungsaufbau zu MongoDB, Einbinden der Routen
-
-Diese Struktur orientiert sich an typischen Node.js/Express-Projekten in produktiven Umgebungen und erleichtert Wartung, Erweiterung und Testbarkeit.
-
-
-## Database & Architecture
-
-The API uses MongoDB as a persistent data store and Mongoose as the ODM layer.  
-The initial in-memory implementation (simple array) has been refactored into a layered architecture:
-
-- `models/` – Mongoose models (e.g. `Invoice`)
-- `controllers/` – business logic and request handling
-- `routes/` – Express routing, mapping URLs to controllers
-- `index.js` – application entry point, MongoDB connection, route registration
-
-This structure follows common Node.js/Express patterns used in real-world projects and improves maintainability, extensibility and testability.
-
-##  Tests (DE)
-
-Das Projekt verwendet Jest und Supertest, um die API-Endpunkte automatisiert zu prüfen.
-Die Tests laufen in einer eigenen MongoDB-Testdatenbank (.env.test) und beeinträchtigen deshalb niemals die echten Daten.
-
-## Docker & Deployment
-Dieses Projekt kann sowohl lokal (Node.js direkt) als auch vollständig in Docker ausgeführt werden.
-
- # Voraussetzungen
-Docker Desktop installiert (Windows / macOS)
-Docker Compose verfügbar
-Lokale Entwicklung (ohne Docker)
-
-# Abhängigkeiten installieren
-npm install
-
-# Entwicklung mit lokaler MongoDB
-node index.js
-# oder
-npm start
-
-Die API ist dann unter:
-
-http://localhost:3000/invoices erreichbar.
-
-# Ausführung mit Docker & docker-compose
-
-Im Projektordner:
-docker-compose up --build
-Dadurch werden:
-# API-Container (Node.js) gestartet
-# MongoDB-Container gestartet
-
-die Verbindung erfolgt intern über die Connection-URL:
-
-# MONGODB_URI=mongodb://mongo:27017/invoice-api
-
-Nach dem Start ist die API wieder unter:
-
-http://localhost:3000/invoices von außen erreichbar.
-
-# Container stoppen:
-docker-compose down
-
-# Typischer Workflow
-
-Lokales Entwickeln, Testen & Debuggen mit:
+```bash
 npm test
-npm start
+```
 
-Für Demo / Deployment / GitHub-Showcase:
-docker-compose up --build
+All API tests are executed using Jest and Supertest.
 
-### Logging & Rate Limiting
+---
 
-The API includes centralized logging and basic rate limiting:
+## Docker
 
-- **Centralized logging (`utils/logger.js`)**  
-  - Unified log format with timestamp and log level (INFO, ERROR, etc.)  
-  - Used in `index.js`, `invoiceController.js` and the `requestLogger` middleware  
-  - HTTP requests are logged with method, path, status code and response time  
-  - Ready to be extended with file logging, log streaming, or external monitoring tools
+Build image:
 
-- **HTTP request logging (`middleware/requestLogger.js`)**  
-  - Every incoming request is logged before being processed  
-  - Useful for debugging and tracing API calls
+```bash
+docker build -t invoice-api .
+```
 
-- **Rate limiting (`middleware/rateLimiter.js`)**  
-  - **Global limiter** for all incoming requests (basic DoS/abuse protection)  
-  - **Stricter write limiter** for `POST`, `PUT`, `DELETE` requests on `/invoices`  
-  - In test mode (`NODE_ENV=test`) limits are relaxed to not interfere with automated tests  
-  - In production the limits can be tuned via configuration
- 
-    ### Logging & Rate Limiting (EN)
+Run container:
 
-The API includes centralized logging and basic rate limiting:
+```bash
+docker run -p 3000:3000 invoice-api
+```
 
-- **Centralized logging (`utils/logger.js`)**  
-  - Unified log format with timestamp and log level (INFO, ERROR, etc.)  
-  - Used in `index.js`, `invoiceController.js` and the `requestLogger` middleware  
-  - HTTP requests are logged with method, path, status code and response time  
-  - Ready to be extended with file logging, log streaming, or external monitoring tools
+---
 
-- **HTTP request logging (`middleware/requestLogger.js`)**  
-  - Every incoming request is logged before being processed  
-  - Useful for debugging and tracing API calls
+## Monitoring
 
-- **Rate limiting (`middleware/rateLimiter.js`)**  
-  - **Global limiter** for all incoming requests (basic DoS/abuse protection)  
-  - **Stricter write limiter** for `POST`, `PUT`, `DELETE` requests on `/invoices`  
-  - In test mode (`NODE_ENV=test`) limits are relaxed to not interfere with automated tests  
-  - In production the limits can be tuned via configuration
+Health endpoint:
 
-- Swagger / OpenAPI-Dokumentation für die Invoice-API eingebunden (/docs)
-- Monitoring-Routen /monitor/health und /monitor/metrics hinzugefügt
-- Zentrales Logger-Utility mit Log-Level-Steuerung und einheitlichem Log-Format implementiert
-- Bestehende Jest- und Supertest-Tests laufen weiterhin grün
+```bash
+GET /monitor/health
+```
 
+Metrics endpoint:
 
+```bash
+GET /monitor/metrics
+```
 
-Dieses Projekt dient bewusst als solide Basis.
+---
 
+## Security Features
 
+- Rate Limiting
+- Centralized Error Handling
+- Input Validation
+- Request Logging
+- API Monitoring
 
+---
 
+## Author
 
+**Mojtaba Tabari**
 
+Website : 
+https://mtintelligence.ai
 
-
-
+LinkedIn : 
+https://www.linkedin.com/in/moj-tabari-04a400227/
