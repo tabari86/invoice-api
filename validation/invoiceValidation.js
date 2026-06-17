@@ -1,19 +1,35 @@
-// validation/invoiceValidation.js
-
 const Joi = require("joi");
 
-// Schema für POST /invoices
-const createInvoiceSchema = Joi.object({
-  customerName: Joi.string().min(2).required(),
-  amount: Joi.number().positive().required(),
+const addressSchema = Joi.object({
+  street: Joi.string().trim().allow("").optional(),
+  city: Joi.string().trim().allow("").optional(),
+  postalCode: Joi.string().trim().allow("").optional(),
+  country: Joi.string().trim().default("Germany").optional(),
 });
 
-// Schema für PUT /invoices/:id
+const customerSchema = Joi.object({
+  name: Joi.string().trim().min(2).required(),
+  email: Joi.string().email().trim().lowercase().optional(),
+  address: addressSchema.optional(),
+});
+
+const invoiceItemSchema = Joi.object({
+  description: Joi.string().trim().min(2).required(),
+  quantity: Joi.number().integer().min(1).required(),
+  unitPrice: Joi.number().min(0).required(),
+});
+
+const createInvoiceSchema = Joi.object({
+  customer: customerSchema.required(),
+  items: Joi.array().items(invoiceItemSchema).min(1).required(),
+  taxRate: Joi.number().min(0).max(100).default(19),
+});
+
 const updateInvoiceSchema = Joi.object({
-  customerName: Joi.string().min(2).optional(),
-  amount: Joi.number().positive().optional(),
-  status: Joi.string().valid("OPEN", "PAID", "CANCELLED").optional(),
-}).min(1); // mindestens ein Feld muss gesetzt sein
+  customer: customerSchema.optional(),
+  items: Joi.array().items(invoiceItemSchema).min(1).optional(),
+  taxRate: Joi.number().min(0).max(100).optional(),
+}).min(1);
 
 module.exports = {
   createInvoiceSchema,

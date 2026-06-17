@@ -1,73 +1,161 @@
 const Invoice = require("../models/invoice");
 
-/**
- * Alle Rechnungen aus der DB holen – optional mit Filtern.
- *
- * filters = {
- *   status?: "OPEN" | "PAID" | "CANCELLED",
- *   from?: Date/String,
- *   to?: Date/String,
- *   minAmount?: Number,
- *   maxAmount?: Number,
- * }
- */
+const DEFAULT_TAX_RATE = 19;
+
+function roundToTwoDecimals(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+function calculateItemTotal(item) {
+  return roundToTwoDecimals(item.quantity * item.unitPrice);
+}
+
+function calculateInvoiceTotals(items, taxRate = DEFAULT_TAX_RATE) {
+  const normalizedTaxRate = Number(taxRate);
+  const normalizedItems = items.map((item) => ({
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    total: calculateItemTotal(item),
+  }));
+
+  const subtotal = roundToTwoDecimals(
+    normalizedItems.reduce((sum, item) => sum + item.total, 0)
+  );
+
+  const taxAmount = roundToTwoDecimals((subtotal * normalizedTaxRate) / 100);
+  const total = roundToTwoDecimals(subtotal + taxAmount);
+
+  return {
+    items: normalizedItems,
+    subtotal,
+    taxRate: normalizedTaxRate,
+    taxAmount,
+    total,
+  };
+}
+
+async function generateInvoiceNumber(date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `INV-${year}-`;
+
+  const latestInvoice = await Invoice.findOne({
+    invoiceNumber: { $regex: `^${prefix}` },
+  })
+    .sort({ invoiceNumber: -1 })
+    .select("invoiceNumber")
+    .lean();
+
+  let nextSequence = 1;
+
+  if (latestInvoice?.invoiceNumber) {
+    const currentSequence = Number(
+      latestInvoice.invoiceNumber.replace(prefix, "")
+    );
+
+    if (!Number.isNaN(currentSequence)) {
+      nextSequence = currentSequence + 1;
+    }
+  }
+
+  return `${prefix}${String(nextSequence).padStart(6, "0")}`;
+}
+
 async function getAllInvoices(filters = {}) {
   const query = {};
 
-  // Status-Filter (nutzt unseren Index: { status: 1, createdAt: -1 })
   if (filters.status) {
     query.status = filters.status;
   }
 
-  // Datumsbereich
   if (filters.from || filters.to) {
     query.createdAt = {};
+
     if (filters.from) {
       query.createdAt.$gte = new Date(filters.from);
     }
+
     if (filters.to) {
       query.createdAt.$lte = new Date(filters.to);
     }
   }
 
-  // Betragsbereich
-  if (typeof filters.minAmount === "number") {
-    query.amount = query.amount || {};
-    query.amount.$gte = filters.minAmount;
-  }
-  if (typeof filters.maxAmount === "number") {
-    query.amount = query.amount || {};
-    query.amount.$lte = filters.maxAmount;
+  if (
+    typeof filters.minAmount === "number" ||
+    typeof filters.maxAmount === "number"
+  ) {
+    query.total = {};
+
+    if (typeof filters.minAmount === "number") {
+      query.total.$gte = filters.minAmount;
+    }
+
+    if (typeof filters.maxAmount === "number") {
+      query.total.$lte = filters.maxAmount;
+    }
   }
 
-  // .lean() -> schnellere, "leichtere" Objekte
   return Invoice.find(query).sort({ createdAt: -1 }).lean();
 }
 
-// Eine Rechnung nach ID holen
 async function getInvoiceById(id) {
   return Invoice.findById(id).lean();
 }
 
-// Neue Rechnung anlegen
-async function createInvoice({ customerName, amount }) {
-  const invoice = new Invoice({
-    customerName,
-    amount,
-  });
+async function createInvoice({ customer, items, taxRate = DEFAULT_TAX_RATE }) {
+  const calculatedValues = calculateInvoiceTotals(items, taxRate);
 
-  return invoice.save();
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const invoice = new Invoice({
+      invoiceNumber: await generateInvoiceNumber(),
+      customer,
+      ...calculatedValues,
+      status: "DRAFT",
+    });
+
+    try {
+      return await invoice.save();
+    } catch (err) {
+      if (err.code === 11000 && attempt < 3) {
+        continue;
+      }
+
+      throw err;
+    }
+  }
+
+  throw new Error("Could not generate a unique invoice number.");
 }
 
-// Rechnung aktualisieren
 async function updateInvoice(id, updateData) {
-  return Invoice.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  }).lean();
+  const invoice = await Invoice.findById(id);
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (updateData.customer) {
+    invoice.customer = updateData.customer;
+  }
+
+  if (updateData.items || updateData.taxRate !== undefined) {
+    const items = updateData.items || invoice.items;
+    const taxRate =
+      updateData.taxRate !== undefined ? updateData.taxRate : invoice.taxRate;
+
+    const calculatedValues = calculateInvoiceTotals(items, taxRate);
+
+    invoice.items = calculatedValues.items;
+    invoice.subtotal = calculatedValues.subtotal;
+    invoice.taxRate = calculatedValues.taxRate;
+    invoice.taxAmount = calculatedValues.taxAmount;
+    invoice.total = calculatedValues.total;
+  }
+
+  const savedInvoice = await invoice.save();
+  return savedInvoice.toObject();
 }
 
-// Rechnung löschen
 async function deleteInvoice(id) {
   return Invoice.findByIdAndDelete(id).lean();
 }

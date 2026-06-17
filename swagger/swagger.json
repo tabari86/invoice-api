@@ -1,136 +1,600 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "Invoice API",
-    "version": "1.0.0",
-    "description": "REST API für Rechnungen – mit MongoDB, Tests, Logging, Rate Limiting und Docker-Support."
+    "version": "1.1.0",
+    "description": "A backend-focused REST API for realistic invoice management with line items, automatic tax calculation, validation, logging, rate limiting, MongoDB persistence, Docker support and automated tests."
   },
   "servers": [
     {
       "url": "http://localhost:3000",
-      "description": "Lokale Entwicklung"
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Invoices",
+      "description": "Invoice management endpoints"
+    },
+    {
+      "name": "Monitoring",
+      "description": "Health and metrics endpoints"
     }
   ],
   "paths": {
     "/invoices": {
       "get": {
-        "summary": "Alle Rechnungen abrufen",
+        "tags": ["Invoices"],
+        "summary": "Get all invoices",
+        "description": "Returns all invoices. Optional query parameters can be used to filter by status, creation date or total amount.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["DRAFT", "OPEN", "PAID", "CANCELLED"]
+            },
+            "example": "DRAFT"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-01-01"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-12-31"
+          },
+          {
+            "name": "minAmount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            },
+            "example": 100
+          },
+          {
+            "name": "maxAmount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            },
+            "example": 1000
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Liste aller Rechnungen"
+            "description": "List of invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       },
       "post": {
-        "summary": "Neue Rechnung erstellen",
+        "tags": ["Invoices"],
+        "summary": "Create a new invoice",
+        "description": "Creates a draft invoice. The invoice number, item totals, subtotal, tax amount and final total are calculated by the backend.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/InvoiceCreate"
+              },
+              "example": {
+                "customer": {
+                  "name": "MT Intelligence",
+                  "email": "billing@mtintelligence.ai",
+                  "address": {
+                    "street": "Example Street 12",
+                    "city": "Stuttgart",
+                    "postalCode": "70173",
+                    "country": "Germany"
+                  }
+                },
+                "items": [
+                  {
+                    "description": "Backend API development",
+                    "quantity": 5,
+                    "unitPrice": 80
+                  }
+                ],
+                "taxRate": 19
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Rechnung erfolgreich erstellt"
+            "description": "Invoice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
-
     "/invoices/{id}": {
       "get": {
-        "summary": "Rechnung per ID abrufen",
+        "tags": ["Invoices"],
+        "summary": "Get invoice by ID",
+        "description": "Returns a single invoice by MongoDB object ID.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true
+            "$ref": "#/components/parameters/InvoiceId"
           }
         ],
         "responses": {
           "200": {
-            "description": "Rechnung gefunden"
+            "description": "Invoice found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceId"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
           }
         }
       },
       "put": {
-        "summary": "Rechnung aktualisieren",
+        "tags": ["Invoices"],
+        "summary": "Update invoice data",
+        "description": "Updates editable invoice data such as customer information, line items or tax rate. Invoice status changes are intentionally not handled by this endpoint.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true
+            "$ref": "#/components/parameters/InvoiceId"
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/InvoiceUpdate"
+              },
+              "example": {
+                "customer": {
+                  "name": "Updated Customer",
+                  "email": "updated@example.com"
+                },
+                "items": [
+                  {
+                    "description": "API maintenance",
+                    "quantity": 3,
+                    "unitPrice": 50
+                  }
+                ],
+                "taxRate": 19
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Rechnung erfolgreich aktualisiert"
+            "description": "Invoice updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceIdOrData"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
           }
         }
       },
       "delete": {
-        "summary": "Rechnung löschen",
+        "tags": ["Invoices"],
+        "summary": "Delete invoice",
+        "description": "Deletes an invoice by ID.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true
+            "$ref": "#/components/parameters/InvoiceId"
           }
         ],
         "responses": {
           "200": {
-            "description": "Rechnung wurde gelöscht"
+            "description": "Invoice deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceId"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
+          }
+        }
+      }
+    },
+    "/monitor/health": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Health check",
+        "description": "Returns the health status of the API.",
+        "responses": {
+          "200": {
+            "description": "API is healthy"
+          }
+        }
+      }
+    },
+    "/monitor/metrics": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "API metrics",
+        "description": "Returns basic runtime or monitoring information.",
+        "responses": {
+          "200": {
+            "description": "Metrics returned successfully"
           }
         }
       }
     }
   },
-
   "components": {
+    "parameters": {
+      "InvoiceId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "MongoDB ObjectId of the invoice",
+        "schema": {
+          "type": "string"
+        },
+        "example": "6656f3c0e2a1d9f8b4a12345"
+      }
+    },
     "schemas": {
-      "InvoiceCreate": {
+      "Address": {
         "type": "object",
-        "required": ["customerName", "amount"],
         "properties": {
-          "customerName": {
+          "street": {
             "type": "string",
-            "example": "MT Intelligence"
+            "example": "Example Street 12"
           },
-          "amount": {
-            "type": "number",
-            "example": 199.99
+          "city": {
+            "type": "string",
+            "example": "Stuttgart"
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "70173"
+          },
+          "country": {
+            "type": "string",
+            "example": "Germany"
           }
         }
       },
-
+      "Customer": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "example": "MT Intelligence"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "billing@mtintelligence.ai"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "InvoiceItemCreate": {
+        "type": "object",
+        "required": ["description", "quantity", "unitPrice"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 2,
+            "example": "Backend API development"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 5
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 80
+          }
+        }
+      },
+      "InvoiceItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InvoiceItemCreate"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number",
+                "example": 400
+              }
+            }
+          }
+        ]
+      },
+      "InvoiceCreate": {
+        "type": "object",
+        "required": ["customer", "items"],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/InvoiceItemCreate"
+            }
+          },
+          "taxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 19,
+            "example": 19
+          }
+        }
+      },
       "InvoiceUpdate": {
         "type": "object",
+        "minProperties": 1,
         "properties": {
-          "customerName": {
-            "type": "string",
-            "example": "Update Kunde"
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
           },
-          "amount": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/InvoiceItemCreate"
+            }
+          },
+          "taxRate": {
             "type": "number",
-            "example": 300.0
+            "minimum": 0,
+            "maximum": 100,
+            "example": 19
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "6656f3c0e2a1d9f8b4a12345"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "example": "INV-2026-000001"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceItem"
+            }
+          },
+          "subtotal": {
+            "type": "number",
+            "example": 400
+          },
+          "taxRate": {
+            "type": "number",
+            "example": 19
+          },
+          "taxAmount": {
+            "type": "number",
+            "example": 76
+          },
+          "total": {
+            "type": "number",
+            "example": 476
           },
           "status": {
             "type": "string",
-            "enum": ["OPEN", "PAID", "CANCELLED"],
-            "example": "PAID"
+            "enum": ["DRAFT", "OPEN", "PAID", "CANCELLED"],
+            "example": "DRAFT"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InvoiceUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Invoice updated"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/Invoice"
+          }
+        }
+      },
+      "InvoiceDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Invoice deleted"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/Invoice"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Internal server error"
+          }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Validation failed"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Internal server error"
+            }
+          }
+        }
+      },
+      "InvoiceNotFound": {
+        "description": "Invoice not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Invoice not found"
+            }
+          }
+        }
+      },
+      "InvalidInvoiceId": {
+        "description": "Invalid invoice ID",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Invalid invoice ID"
+            }
+          }
+        }
+      },
+      "InvalidInvoiceIdOrData": {
+        "description": "Invalid invoice ID or data",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Invalid invoice ID or data"
+            }
           }
         }
       }

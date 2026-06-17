@@ -1,7 +1,7 @@
 const invoiceService = require("../services/invoiceService");
 const logger = require("../utils/logger");
 
-// Alle Rechnungen – optional mit Filtern
+// Get all invoices with optional filters
 exports.getAllInvoices = async (req, res) => {
   try {
     const { status, from, to, minAmount, maxAmount } = req.query;
@@ -11,120 +11,127 @@ exports.getAllInvoices = async (req, res) => {
     if (status) {
       filters.status = status;
     }
+
     if (from) {
       filters.from = from;
     }
+
     if (to) {
       filters.to = to;
     }
+
     if (minAmount) {
       const parsed = Number(minAmount);
+
       if (!Number.isNaN(parsed)) {
         filters.minAmount = parsed;
       }
     }
+
     if (maxAmount) {
       const parsed = Number(maxAmount);
+
       if (!Number.isNaN(parsed)) {
         filters.maxAmount = parsed;
       }
     }
 
     const invoices = await invoiceService.getAllInvoices(filters);
+
     res.json(invoices);
   } catch (err) {
-    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    logger.error(`Error in getAllInvoices: ${err.message}`);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// Eine Rechnung nach ID
+// Get one invoice by ID
 exports.getInvoiceById = async (req, res) => {
   try {
     const invoice = await invoiceService.getInvoiceById(req.params.id);
 
     if (!invoice) {
-      return res.status(404).json({ message: "Rechnung nicht gefunden" });
+      return res.status(404).json({ message: "Invoice not found" });
     }
 
     res.json(invoice);
   } catch (err) {
-    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
-    res.status(400).json({ message: "Ungültige ID" });
+    logger.error(`Error in getInvoiceById: ${err.message}`);
+    res.status(400).json({ message: "Invalid invoice ID" });
   }
 };
 
-// Neue Rechnung anlegen
+// Create a new invoice
 exports.createInvoice = async (req, res) => {
   try {
-    const { customerName, amount } = req.body;
+    const { customer, items, taxRate } = req.body;
 
     const newInvoice = await invoiceService.createInvoice({
-      customerName,
-      amount,
+      customer,
+      items,
+      taxRate,
     });
 
     res.status(201).json(newInvoice);
   } catch (err) {
-    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    logger.error(`Error in createInvoice: ${err.message}`);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// Rechnung aktualisieren
+// Update invoice data
 exports.updateInvoice = async (req, res) => {
   try {
-    const { customerName, amount, status } = req.body;
+    const { customer, items, taxRate } = req.body;
 
-    const allowedStatus = ["OPEN", "PAID", "CANCELLED"];
     const updateData = {};
 
-    if (typeof customerName === "string") {
-      updateData.customerName = customerName;
+    if (customer) {
+      updateData.customer = customer;
     }
 
-    if (typeof amount === "number") {
-      updateData.amount = amount;
+    if (items) {
+      updateData.items = items;
     }
 
-    if (typeof status === "string" && allowedStatus.includes(status)) {
-      updateData.status = status;
+    if (taxRate !== undefined) {
+      updateData.taxRate = taxRate;
     }
 
-    const updated = await invoiceService.updateInvoice(
+    const updatedInvoice = await invoiceService.updateInvoice(
       req.params.id,
       updateData
     );
 
-    if (!updated) {
-      return res.status(404).json({ message: "Rechnung nicht gefunden" });
+    if (!updatedInvoice) {
+      return res.status(404).json({ message: "Invoice not found" });
     }
 
     res.json({
-      message: "Rechnung aktualisiert",
-      invoice: updated,
+      message: "Invoice updated",
+      invoice: updatedInvoice,
     });
   } catch (err) {
-    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
-    res.status(400).json({ message: "Ungültige ID oder Daten" });
+    logger.error(`Error in updateInvoice: ${err.message}`);
+    res.status(400).json({ message: "Invalid invoice ID or data" });
   }
 };
 
-// Rechnung löschen
+// Delete invoice
 exports.deleteInvoice = async (req, res) => {
   try {
-    const deleted = await invoiceService.deleteInvoice(req.params.id);
+    const deletedInvoice = await invoiceService.deleteInvoice(req.params.id);
 
-    if (!deleted) {
-      return res.status(404).json({ message: "Rechnung nicht gefunden" });
+    if (!deletedInvoice) {
+      return res.status(404).json({ message: "Invoice not found" });
     }
 
     res.json({
-      message: "Rechnung gelöscht",
-      invoice: deleted,
+      message: "Invoice deleted",
+      invoice: deletedInvoice,
     });
   } catch (err) {
-    logger.error(`Fehler bei getAllInvoices: ${err.message}`);
-    res.status(400).json({ message: "Ungültige ID" });
+    logger.error(`Error in deleteInvoice: ${err.message}`);
+    res.status(400).json({ message: "Invalid invoice ID" });
   }
 };
