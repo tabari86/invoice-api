@@ -159,7 +159,6 @@ const invoiceSchema = new mongoose.Schema(
 );
 
 invoiceSchema.index({ status: 1, createdAt: -1 });
-invoiceSchema.index({ invoiceNumber: 1 }, { unique: true });
 
 const Invoice = mongoose.model("Invoice", invoiceSchema);
 

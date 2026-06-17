@@ -1,11 +1,14 @@
 # Invoice API
 
+![CI](https://github.com/tabari86/invoice-api/actions/workflows/ci.yml/badge.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=nodedotjs)
 ![Express](https://img.shields.io/badge/Express-API-black?logo=express)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-green?logo=mongodb)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
 ![Jest](https://img.shields.io/badge/Tests-Passing-success?logo=jest)
 ![Swagger](https://img.shields.io/badge/OpenAPI-3.0-brightgreen)
+
+
 
 A backend-focused REST API for managing invoices with line items, automatic tax calculation, MongoDB persistence, Swagger documentation, Docker support and automated API tests.
 
@@ -82,6 +85,28 @@ INV-2026-000001
 * Docker
 * Winston
 * Morgan
+
+---
+
+## Live Deployment
+
+The API is deployed on Render and available at:
+
+```text
+https://invoice-api-disf.onrender.com
+```
+
+### Production Endpoints
+
+| Endpoint                                               | Description               |
+| ------------------------------------------------------ | ------------------------- |
+| `https://invoice-api-disf.onrender.com/`               | API root endpoint         |
+| `https://invoice-api-disf.onrender.com/monitor/health` | Production health check   |
+| `https://invoice-api-disf.onrender.com/api-docs`       | Swagger API documentation |
+
+### Production Swagger Preview
+
+![Production Swagger UI](docs/swagger-ui.png)
 
 ---
 
@@ -190,20 +215,49 @@ http://localhost:3000/api-docs
 ```text
 invoice-api/
 │
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
 ├── controllers/
+│   └── invoiceController.js
+│
 ├── docs/
+│   └── swagger-ui.png
+│
 ├── middleware/
+│   ├── rateLimiter.js
+│   ├── requestLogger.js
+│   └── validateRequest.js
+│
 ├── models/
+│   └── invoice.js
+│
 ├── routes/
+│   ├── invoiceRoutes.js
+│   └── monitorRoutes.js
+│
 ├── services/
+│   └── invoiceService.js
+│
 ├── swagger/
+│   └── swagger.json
+│
 ├── tests/
+│   ├── invoice.api.test.js
+│   └── invoice.test.js
+│
 ├── utils/
+│   └── logger.js
+│
+├── validation/
+│   └── invoiceValidation.js
 │
 ├── Dockerfile
 ├── docker-compose.yml
 ├── index.js
 ├── package.json
+├── package-lock.json
 └── README.md
 ```
 
@@ -329,10 +383,8 @@ PATCH /invoices/:id/cancel
 
 ## Author
 
-**Mojtaba Tabari**
+**Moj Tabari**
 
-Website:
-https://mtintelligence.ai
+- Website: [mtintelligence.ai](https://mtintelligence.ai)
 
-LinkedIn:
-https://www.linkedin.com/in/moj-tabari-04a400227/
+- LinkedIn: [Mojtaba Tabari](https://www.linkedin.com/in/moj-tabari-04a400227/)
