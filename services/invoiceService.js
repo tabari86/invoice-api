@@ -181,6 +181,26 @@ async function issueInvoice(id) {
   return savedInvoice.toObject();
 }
 
+async function payInvoice(id) {
+  const invoice = await Invoice.findById(id);
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (invoice.status !== "OPEN") {
+    const error = new Error("Only open invoices can be paid.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  invoice.status = "PAID";
+  invoice.paidAt = new Date();
+
+  const savedInvoice = await invoice.save();
+  return savedInvoice.toObject();
+}
+
 async function deleteInvoice(id) {
   return Invoice.findByIdAndDelete(id).lean();
 }
@@ -192,4 +212,5 @@ module.exports = {
   updateInvoice,
   deleteInvoice,
   issueInvoice,
+  payInvoice,
 };

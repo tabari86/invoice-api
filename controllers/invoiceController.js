@@ -141,6 +141,30 @@ exports.issueInvoice = async (req, res) => {
   }
 };
 
+// Pay invoice
+exports.payInvoice = async (req, res) => {
+  try {
+    const paidInvoice = await invoiceService.payInvoice(req.params.id);
+
+    if (!paidInvoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+
+    res.json({
+      message: "Invoice paid",
+      invoice: paidInvoice,
+    });
+  } catch (err) {
+    logger.error(`Error in payInvoice: ${err.message}`);
+
+    if (err.statusCode === 409) {
+      return res.status(409).json({ message: err.message });
+    }
+
+    res.status(400).json({ message: "Invalid invoice ID" });
+  }
+};
+
 // Delete invoice
 exports.deleteInvoice = async (req, res) => {
   try {

@@ -276,4 +276,101 @@ describe("Invoice API", () => {
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("message", "Invoice not found");
   });
+
+    it("PATCH /invoices/:id/pay should mark an open invoice as paid", async () => {
+    const issuedAt = new Date();
+    const dueDate = new Date(issuedAt);
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "OPEN",
+        issuedAt,
+        dueDate,
+        customer: {
+          name: "Payment Customer",
+          email: "payment@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/pay`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message", "Invoice paid");
+    expect(response.body).toHaveProperty("invoice");
+
+    expect(response.body.invoice.status).toBe("PAID");
+    expect(response.body.invoice.paidAt).not.toBeNull();
+
+    expect(response.body.invoice.subtotal).toBe(created.subtotal);
+    expect(response.body.invoice.taxAmount).toBe(created.taxAmount);
+    expect(response.body.invoice.total).toBe(created.total);
+
+    const storedInvoice = await Invoice.findById(created._id);
+    expect(storedInvoice.status).toBe("PAID");
+    expect(storedInvoice.paidAt).not.toBeNull();
+  });
+
+  it("PATCH /invoices/:id/pay should not pay a draft invoice", async () => {
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "DRAFT",
+        customer: {
+          name: "Draft Payment Customer",
+          email: "draft-payment@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/pay`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Only open invoices can be paid."
+    );
+
+    const unchangedInvoice = await Invoice.findById(created._id);
+    expect(unchangedInvoice.status).toBe("DRAFT");
+    expect(unchangedInvoice.paidAt).toBeNull();
+  });
+
+  it("PATCH /invoices/:id/pay should not pay a cancelled invoice", async () => {
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        customer: {
+          name: "Cancelled Payment Customer",
+          email: "cancelled-payment@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/pay`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Only open invoices can be paid."
+    );
+
+    const unchangedInvoice = await Invoice.findById(created._id);
+    expect(unchangedInvoice.status).toBe("CANCELLED");
+    expect(unchangedInvoice.paidAt).toBeNull();
+  });
+
+  it("PATCH /invoices/:id/pay should return 404 for a missing invoice", async () => {
+    const missingId = new mongoose.Types.ObjectId();
+
+    const response = await request(app).patch(`/invoices/${missingId}/pay`);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("message", "Invoice not found");
+  });
+
 });

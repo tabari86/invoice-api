@@ -55,36 +55,38 @@ INV-2026-000001
 
 ## Invoice Lifecycle Rules
 
-The current version includes the first invoice lifecycle action: issuing a draft invoice.
+The current version includes dedicated lifecycle actions for issuing and paying invoices.
 
-| Action        | Rule                                               | Result                         |
-|-------------- |--------------------------------------------------- | -------------------------------|
-| Issue invoice | Only `DRAFT` invoices can be issued                | Status changes to `OPEN`       |
-| Issue date    | Set automatically when the invoice is issued       | `issuedAt` is stored           |
-| Due date      | Calculated automatically                           | `dueDate = issuedAt + 14 days` |
+| Action        | Rule                                         | Result                         |
+| ------------- | -------------------------------------------- | ------------------------------ |
+| Issue invoice | Only `DRAFT` invoices can be issued          | Status changes to `OPEN`       |
+| Issue date    | Set automatically when the invoice is issued | `issuedAt` is stored           |
+| Due date      | Calculated automatically                     | `dueDate = issuedAt + 14 days` |
+| Pay invoice   | Only `OPEN` invoices can be paid             | Status changes to `PAID`       |
+| Payment date  | Set automatically when the invoice is paid   | `paidAt` is stored             |
 
-
-Paid and cancelled invoice flows are planned as separate lifecycle endpoints.
+Cancelled invoice flows are planned as a separate lifecycle endpoint.
 
 ---
 
 ## Features
 
-| Feature         | Description                                                     |
-| --------------- | --------------------------------------------------------------- |
-| Invoice CRUD    | Create, read, update and delete invoices                        |
-| Invoice Numbers | Automatic invoice number generation                             |
-| Line Items      | Invoices contain one or more billable items                     |
-| Tax Calculation | Automatic subtotal, tax amount and total calculation            |
-| MongoDB         | Persistent invoice storage with Mongoose                        |
-| Validation      | Request validation with Joi                                     |
-| Swagger         | Interactive OpenAPI documentation                               |
-| Logging         | HTTP request logging with Morgan and Winston                    |
-| Rate Limiting   | Global and write-operation rate limits                          |
-| Monitoring      | Health and metrics endpoints                                    |
-| Tests           | Automated API tests with Jest and Supertest                     |
-| Docker          | Containerized application setup                                 |
-| Invoice Issuing | Draft invoices can be issued with automatic issue and due dates |
+| Feature         | Description                                                             |
+| --------------- | ----------------------------------------------------------------------- |
+| Invoice CRUD    | Create, read, update and delete invoices                                |
+| Invoice Numbers | Automatic invoice number generation                                     |
+| Line Items      | Invoices contain one or more billable items                             |
+| Tax Calculation | Automatic subtotal, tax amount and total calculation                    |
+| MongoDB         | Persistent invoice storage with Mongoose                                |
+| Validation      | Request validation with Joi                                             |
+| Swagger         | Interactive OpenAPI documentation                                       |
+| Logging         | HTTP request logging with Morgan and Winston                            |
+| Rate Limiting   | Global and write-operation rate limits                                  |
+| Monitoring      | Health and metrics endpoints                                            |
+| Tests           | Automated API tests with Jest and Supertest                             |
+| Docker          | Containerized application setup                                         |
+| Invoice Issuing | Draft invoices can be issued with automatic issue and due dates         |
+| Invoice Payment | Open invoices can be marked as paid with an automatic payment timestamp |
 
 ---
 
@@ -151,6 +153,7 @@ http://localhost:3000/api-docs
 | POST   | `/invoices`           | Create a new draft invoice   |
 | PUT    | `/invoices/:id`       | Update editable invoice data |
 | PATCH  | `/invoices/:id/issue` | Issue a draft invoice        |
+| PATCH  | `/invoices/:id/pay`   | Mark an open invoice as paid |
 | DELETE | `/invoices/:id`       | Delete invoice               |
 
 ### Monitoring
@@ -380,6 +383,8 @@ The current version focuses on the core invoice backend:
 * Clean REST API structure
 * Invoice creation with calculated totals
 * Invoice issuing with automatic due date calculation
+* Open invoices can be marked as paid after they have been issued
+* Invoice payment with automatic payment timestamp
 * MongoDB persistence
 * Request validation
 * Swagger documentation
@@ -387,12 +392,12 @@ The current version focuses on the core invoice backend:
 * Docker support
 * Basic monitoring and logging
 
-Invoice lifecycle actions such as paying and cancelling invoices are planned as dedicated business endpoints instead of being handled through a generic update request.
+
+Invoice cancellation is planned as a dedicated business endpoint instead of being handled through a generic update request.
 
 Planned endpoints:
 
 ```text
-PATCH /invoices/:id/pay
 PATCH /invoices/:id/cancel
 ```
 
