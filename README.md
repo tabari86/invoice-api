@@ -38,6 +38,7 @@ This API models invoices with:
 * Tax calculation with a default tax rate of 19%
 * Final total calculation
 * Invoice status handling
+* Draft invoices can be issued and receive an automatic due date
 
 New invoices are created as drafts and receive an automatically generated invoice number in the following format:
 
@@ -50,25 +51,40 @@ Example:
 ```text
 INV-2026-000001
 ```
+---
+
+## Invoice Lifecycle Rules
+
+The current version includes the first invoice lifecycle action: issuing a draft invoice.
+
+| Action        | Rule                                               | Result                         |
+|-------------- |--------------------------------------------------- | -------------------------------|
+| Issue invoice | Only `DRAFT` invoices can be issued                | Status changes to `OPEN`       |
+| Issue date    | Set automatically when the invoice is issued       | `issuedAt` is stored           |
+| Due date      | Calculated automatically                           | `dueDate = issuedAt + 14 days` |
+
+
+Paid and cancelled invoice flows are planned as separate lifecycle endpoints.
 
 ---
 
 ## Features
 
-| Feature         | Description                                          |
-| --------------- | ---------------------------------------------------- |
-| Invoice CRUD    | Create, read, update and delete invoices             |
-| Invoice Numbers | Automatic invoice number generation                  |
-| Line Items      | Invoices contain one or more billable items          |
-| Tax Calculation | Automatic subtotal, tax amount and total calculation |
-| MongoDB         | Persistent invoice storage with Mongoose             |
-| Validation      | Request validation with Joi                          |
-| Swagger         | Interactive OpenAPI documentation                    |
-| Logging         | HTTP request logging with Morgan and Winston         |
-| Rate Limiting   | Global and write-operation rate limits               |
-| Monitoring      | Health and metrics endpoints                         |
-| Tests           | Automated API tests with Jest and Supertest          |
-| Docker          | Containerized application setup                      |
+| Feature         | Description                                                     |
+| --------------- | --------------------------------------------------------------- |
+| Invoice CRUD    | Create, read, update and delete invoices                        |
+| Invoice Numbers | Automatic invoice number generation                             |
+| Line Items      | Invoices contain one or more billable items                     |
+| Tax Calculation | Automatic subtotal, tax amount and total calculation            |
+| MongoDB         | Persistent invoice storage with Mongoose                        |
+| Validation      | Request validation with Joi                                     |
+| Swagger         | Interactive OpenAPI documentation                               |
+| Logging         | HTTP request logging with Morgan and Winston                    |
+| Rate Limiting   | Global and write-operation rate limits                          |
+| Monitoring      | Health and metrics endpoints                                    |
+| Tests           | Automated API tests with Jest and Supertest                     |
+| Docker          | Containerized application setup                                 |
+| Invoice Issuing | Draft invoices can be issued with automatic issue and due dates |
 
 ---
 
@@ -128,13 +144,14 @@ http://localhost:3000/api-docs
 
 ### Invoices
 
-| Method | Endpoint        | Description                  |
-| ------ | --------------- | ---------------------------- |
-| GET    | `/invoices`     | Get all invoices             |
-| GET    | `/invoices/:id` | Get invoice by ID            |
-| POST   | `/invoices`     | Create a new draft invoice   |
-| PUT    | `/invoices/:id` | Update editable invoice data |
-| DELETE | `/invoices/:id` | Delete invoice               |
+| Method | Endpoint              | Description                  |
+| ------ | --------------------- | ---------------------------- |
+| GET    | `/invoices`           | Get all invoices             |
+| GET    | `/invoices/:id`       | Get invoice by ID            |
+| POST   | `/invoices`           | Create a new draft invoice   |
+| PUT    | `/invoices/:id`       | Update editable invoice data |
+| PATCH  | `/invoices/:id/issue` | Issue a draft invoice        |
+| DELETE | `/invoices/:id`       | Delete invoice               |
 
 ### Monitoring
 
@@ -362,6 +379,7 @@ The current version focuses on the core invoice backend:
 
 * Clean REST API structure
 * Invoice creation with calculated totals
+* Invoice issuing with automatic due date calculation
 * MongoDB persistence
 * Request validation
 * Swagger documentation
@@ -369,12 +387,11 @@ The current version focuses on the core invoice backend:
 * Docker support
 * Basic monitoring and logging
 
-Invoice lifecycle actions such as issuing, paying and cancelling invoices are planned as dedicated business endpoints instead of being handled through a generic update request.
+Invoice lifecycle actions such as paying and cancelling invoices are planned as dedicated business endpoints instead of being handled through a generic update request.
 
 Planned endpoints:
 
 ```text
-PATCH /invoices/:id/issue
 PATCH /invoices/:id/pay
 PATCH /invoices/:id/cancel
 ```

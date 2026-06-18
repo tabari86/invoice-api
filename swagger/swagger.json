@@ -152,6 +152,77 @@
         }
       }
     },
+        "/invoices/{id}/issue": {
+      "patch": {
+        "tags": ["Invoices"],
+        "summary": "Issue a draft invoice",
+        "description": "Issues a draft invoice and changes its status from DRAFT to OPEN. The backend sets issuedAt and dueDate automatically. The default payment term is 14 days.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InvoiceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice issued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceUpdateResponse"
+                },
+                "example": {
+                  "message": "Invoice issued",
+                  "invoice": {
+                    "_id": "6656f3c0e2a1d9f8b4a12345",
+                    "invoiceNumber": "INV-2026-000001",
+                    "customer": {
+                      "name": "MT Intelligence",
+                      "email": "billing@mtintelligence.ai"
+                    },
+                    "items": [
+                      {
+                        "description": "Backend API development",
+                        "quantity": 5,
+                        "unitPrice": 80,
+                        "total": 400
+                      }
+                    ],
+                    "subtotal": 400,
+                    "taxRate": 19,
+                    "taxAmount": 76,
+                    "total": 476,
+                    "status": "OPEN",
+                    "issuedAt": "2026-06-18T09:00:00.000Z",
+                    "dueDate": "2026-07-02T09:00:00.000Z",
+                    "paidAt": null,
+                    "cancelledAt": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceId"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
+          },
+          "409": {
+            "description": "Invoice cannot be issued because it is not a draft invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Only draft invoices can be issued."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invoices/{id}": {
       "get": {
         "tags": ["Invoices"],

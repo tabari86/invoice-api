@@ -117,6 +117,30 @@ exports.updateInvoice = async (req, res) => {
   }
 };
 
+// Issue invoice
+exports.issueInvoice = async (req, res) => {
+  try {
+    const issuedInvoice = await invoiceService.issueInvoice(req.params.id);
+
+    if (!issuedInvoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+
+    res.json({
+      message: "Invoice issued",
+      invoice: issuedInvoice,
+    });
+  } catch (err) {
+    logger.error(`Error in issueInvoice: ${err.message}`);
+
+    if (err.statusCode === 409) {
+      return res.status(409).json({ message: err.message });
+    }
+
+    res.status(400).json({ message: "Invalid invoice ID" });
+  }
+};
+
 // Delete invoice
 exports.deleteInvoice = async (req, res) => {
   try {

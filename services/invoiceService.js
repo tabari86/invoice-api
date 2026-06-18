@@ -156,6 +156,31 @@ async function updateInvoice(id, updateData) {
   return savedInvoice.toObject();
 }
 
+async function issueInvoice(id) {
+  const invoice = await Invoice.findById(id);
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (invoice.status !== "DRAFT") {
+    const error = new Error("Only draft invoices can be issued.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const issuedAt = new Date();
+  const dueDate = new Date(issuedAt);
+  dueDate.setDate(dueDate.getDate() + 14);
+
+  invoice.status = "OPEN";
+  invoice.issuedAt = issuedAt;
+  invoice.dueDate = dueDate;
+
+  const savedInvoice = await invoice.save();
+  return savedInvoice.toObject();
+}
+
 async function deleteInvoice(id) {
   return Invoice.findByIdAndDelete(id).lean();
 }
@@ -166,4 +191,5 @@ module.exports = {
   createInvoice,
   updateInvoice,
   deleteInvoice,
+  issueInvoice,
 };

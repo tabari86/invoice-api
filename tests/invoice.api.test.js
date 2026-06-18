@@ -206,4 +206,74 @@ describe("Invoice API", () => {
     const check = await Invoice.findById(created._id);
     expect(check).toBeNull();
   });
+    it("PATCH /invoices/:id/issue should issue a draft invoice", async () => {
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "DRAFT",
+        customer: {
+          name: "Issue Customer",
+          email: "issue@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/issue`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message", "Invoice issued");
+    expect(response.body).toHaveProperty("invoice");
+
+    expect(response.body.invoice.status).toBe("OPEN");
+    expect(response.body.invoice.issuedAt).not.toBeNull();
+    expect(response.body.invoice.dueDate).not.toBeNull();
+
+    const issuedAt = new Date(response.body.invoice.issuedAt);
+    const dueDate = new Date(response.body.invoice.dueDate);
+    const differenceInDays = Math.round(
+      (dueDate.getTime() - issuedAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    expect(differenceInDays).toBe(14);
+
+    expect(response.body.invoice.subtotal).toBe(created.subtotal);
+    expect(response.body.invoice.taxAmount).toBe(created.taxAmount);
+    expect(response.body.invoice.total).toBe(created.total);
+  });
+
+  it("PATCH /invoices/:id/issue should not issue a paid invoice", async () => {
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "PAID",
+        paidAt: new Date(),
+        customer: {
+          name: "Paid Customer",
+          email: "paid@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/issue`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Only draft invoices can be issued."
+    );
+
+    const unchangedInvoice = await Invoice.findById(created._id);
+    expect(unchangedInvoice.status).toBe("PAID");
+    expect(unchangedInvoice.issuedAt).toBeNull();
+    expect(unchangedInvoice.dueDate).toBeNull();
+  });
+
+  it("PATCH /invoices/:id/issue should return 404 for a missing invoice", async () => {
+    const missingId = new mongoose.Types.ObjectId();
+
+    const response = await request(app).patch(`/invoices/${missingId}/issue`);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("message", "Invoice not found");
+  });
 });
