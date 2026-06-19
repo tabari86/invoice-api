@@ -355,7 +355,7 @@ http://localhost:3000/api-docs
 npm test
 ```
 
-The test suite covers the main invoice API endpoints and verifies invoice creation, automatic total calculation, invoice retrieval, updates and deletion.
+The test suite covers the main invoice API endpoints and verifies invoice creation, automatic total calculation, invoice retrieval, updates, deletion and invoice lifecycle actions such as issuing, paying and cancelling invoices.
 
 ---
 
@@ -388,7 +388,6 @@ The current version focuses on the core invoice backend:
 * Clean REST API structure
 * Invoice creation with calculated totals
 * Invoice issuing with automatic due date calculation
-* Open invoices can be marked as paid after they have been issued
 * Invoice payment with automatic payment timestamp
 * Invoice cancellation with automatic cancellation timestamp
 * MongoDB persistence
@@ -398,12 +397,7 @@ The current version focuses on the core invoice backend:
 * Docker support
 * Basic monitoring and logging
 
-
-Invoice cancellation is planned as a dedicated business endpoint instead of being handled through a generic update request.
-
-Planned endpoints:
-
-Refunds, credit notes and partial payments are intentionally not included in the current scope and may be considered as future improvements.
+Refunds, credit notes, partial payments, user accounts and invoice PDF generation are intentionally not included in the current scope. These topics may be considered as future improvements if they add clear business value.
 
 ---
 
