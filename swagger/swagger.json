@@ -152,6 +152,116 @@
         }
       }
     },
+        "/invoices/{id}": {
+      "get": {
+        "tags": ["Invoices"],
+        "summary": "Get invoice by ID",
+        "description": "Returns a single invoice by MongoDB object ID.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InvoiceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceId"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Invoices"],
+        "summary": "Update invoice data",
+        "description": "Updates editable invoice data such as customer information, line items or tax rate. Invoice status changes are intentionally not handled by this endpoint.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InvoiceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceUpdate"
+              },
+              "example": {
+                "customer": {
+                  "name": "Updated Customer",
+                  "email": "updated@example.com"
+                },
+                "items": [
+                  {
+                    "description": "API maintenance",
+                    "quantity": 3,
+                    "unitPrice": 50
+                  }
+                ],
+                "taxRate": 19
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoice updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceIdOrData"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Invoices"],
+        "summary": "Delete invoice",
+        "description": "Deletes an invoice by ID.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/InvoiceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidInvoiceId"
+          },
+          "404": {
+            "$ref": "#/components/responses/InvoiceNotFound"
+          }
+        }
+      }
+    },
         "/invoices/{id}/issue": {
       "patch": {
         "tags": ["Invoices"],
@@ -294,11 +404,11 @@
         }
       }
     },
-    "/invoices/{id}": {
-      "get": {
+        "/invoices/{id}/cancel": {
+      "patch": {
         "tags": ["Invoices"],
-        "summary": "Get invoice by ID",
-        "description": "Returns a single invoice by MongoDB object ID.",
+        "summary": "Cancel a draft or open invoice",
+        "description": "Cancels an invoice and stores the cancellation timestamp automatically. Draft and open invoices can be cancelled. Paid and already cancelled invoices cannot be cancelled.",
         "parameters": [
           {
             "$ref": "#/components/parameters/InvoiceId"
@@ -306,91 +416,39 @@
         ],
         "responses": {
           "200": {
-            "description": "Invoice found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invoice"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidInvoiceId"
-          },
-          "404": {
-            "$ref": "#/components/responses/InvoiceNotFound"
-          }
-        }
-      },
-      "put": {
-        "tags": ["Invoices"],
-        "summary": "Update invoice data",
-        "description": "Updates editable invoice data such as customer information, line items or tax rate. Invoice status changes are intentionally not handled by this endpoint.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/InvoiceId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InvoiceUpdate"
-              },
-              "example": {
-                "customer": {
-                  "name": "Updated Customer",
-                  "email": "updated@example.com"
-                },
-                "items": [
-                  {
-                    "description": "API maintenance",
-                    "quantity": 3,
-                    "unitPrice": 50
-                  }
-                ],
-                "taxRate": 19
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Invoice updated successfully",
+            "description": "Invoice cancelled successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InvoiceUpdateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/InvalidInvoiceIdOrData"
-          },
-          "404": {
-            "$ref": "#/components/responses/InvoiceNotFound"
-          }
-        }
-      },
-      "delete": {
-        "tags": ["Invoices"],
-        "summary": "Delete invoice",
-        "description": "Deletes an invoice by ID.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/InvoiceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Invoice deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvoiceDeleteResponse"
+                },
+                "example": {
+                  "message": "Invoice cancelled",
+                  "invoice": {
+                    "_id": "6656f3c0e2a1d9f8b4a12345",
+                    "invoiceNumber": "INV-2026-000001",
+                    "customer": {
+                      "name": "MT Intelligence",
+                      "email": "billing@mtintelligence.ai"
+                    },
+                    "items": [
+                      {
+                        "description": "Backend API development",
+                        "quantity": 5,
+                        "unitPrice": 80,
+                        "total": 400
+                      }
+                    ],
+                    "subtotal": 400,
+                    "taxRate": 19,
+                    "taxAmount": 76,
+                    "total": 476,
+                    "status": "CANCELLED",
+                    "issuedAt": "2026-06-18T09:00:00.000Z",
+                    "dueDate": "2026-07-02T09:00:00.000Z",
+                    "paidAt": null,
+                    "cancelledAt": "2026-06-18T11:15:00.000Z"
+                  }
                 }
               }
             }
@@ -400,6 +458,30 @@
           },
           "404": {
             "$ref": "#/components/responses/InvoiceNotFound"
+          },
+          "409": {
+            "description": "Invoice cannot be cancelled in its current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "paidInvoice": {
+                    "summary": "Paid invoice",
+                    "value": {
+                      "message": "Paid invoices cannot be cancelled."
+                    }
+                  },
+                  "alreadyCancelled": {
+                    "summary": "Already cancelled invoice",
+                    "value": {
+                      "message": "Invoice is already cancelled."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

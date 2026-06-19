@@ -373,4 +373,134 @@ describe("Invoice API", () => {
     expect(response.body).toHaveProperty("message", "Invoice not found");
   });
 
+    it("PATCH /invoices/:id/cancel should cancel a draft invoice", async () => {
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "DRAFT",
+        customer: {
+          name: "Draft Cancel Customer",
+          email: "draft-cancel@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/cancel`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message", "Invoice cancelled");
+    expect(response.body).toHaveProperty("invoice");
+
+    expect(response.body.invoice.status).toBe("CANCELLED");
+    expect(response.body.invoice.cancelledAt).not.toBeNull();
+
+    expect(response.body.invoice.subtotal).toBe(created.subtotal);
+    expect(response.body.invoice.taxAmount).toBe(created.taxAmount);
+    expect(response.body.invoice.total).toBe(created.total);
+
+    const storedInvoice = await Invoice.findById(created._id);
+    expect(storedInvoice.status).toBe("CANCELLED");
+    expect(storedInvoice.cancelledAt).not.toBeNull();
+  });
+
+  it("PATCH /invoices/:id/cancel should cancel an open invoice", async () => {
+    const issuedAt = new Date();
+    const dueDate = new Date(issuedAt);
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "OPEN",
+        issuedAt,
+        dueDate,
+        customer: {
+          name: "Open Cancel Customer",
+          email: "open-cancel@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/cancel`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message", "Invoice cancelled");
+
+    expect(response.body.invoice.status).toBe("CANCELLED");
+    expect(response.body.invoice.cancelledAt).not.toBeNull();
+
+    const storedInvoice = await Invoice.findById(created._id);
+    expect(storedInvoice.status).toBe("CANCELLED");
+    expect(storedInvoice.cancelledAt).not.toBeNull();
+  });
+
+  it("PATCH /invoices/:id/cancel should not cancel a paid invoice", async () => {
+    const issuedAt = new Date();
+    const dueDate = new Date(issuedAt);
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "PAID",
+        issuedAt,
+        dueDate,
+        paidAt: new Date(),
+        customer: {
+          name: "Paid Cancel Customer",
+          email: "paid-cancel@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/cancel`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Paid invoices cannot be cancelled."
+    );
+
+    const unchangedInvoice = await Invoice.findById(created._id);
+    expect(unchangedInvoice.status).toBe("PAID");
+    expect(unchangedInvoice.cancelledAt).toBeNull();
+  });
+
+  it("PATCH /invoices/:id/cancel should not cancel an already cancelled invoice", async () => {
+    const cancelledAt = new Date();
+
+    const created = await Invoice.create(
+      buildInvoice({
+        sequence: 1,
+        status: "CANCELLED",
+        cancelledAt,
+        customer: {
+          name: "Already Cancelled Customer",
+          email: "already-cancelled@example.com",
+        },
+      })
+    );
+
+    const response = await request(app).patch(`/invoices/${created._id}/cancel`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Invoice is already cancelled."
+    );
+
+    const unchangedInvoice = await Invoice.findById(created._id);
+    expect(unchangedInvoice.status).toBe("CANCELLED");
+    expect(unchangedInvoice.cancelledAt).toEqual(cancelledAt);
+  });
+
+  it("PATCH /invoices/:id/cancel should return 404 for a missing invoice", async () => {
+    const missingId = new mongoose.Types.ObjectId();
+
+    const response = await request(app).patch(`/invoices/${missingId}/cancel`);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toHaveProperty("message", "Invoice not found");
+  });
+
 });

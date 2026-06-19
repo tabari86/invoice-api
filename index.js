@@ -35,7 +35,31 @@ app.get("/", (req, res) => {
 });
 
 // Swagger UI unter /api-docs
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const swaggerOptions = {
+  swaggerOptions: {
+    operationsSorter: (a, b) => {
+      const order = [
+        "GET /invoices",
+        "GET /invoices/{id}",
+        "POST /invoices",
+        "PUT /invoices/{id}",
+        "DELETE /invoices/{id}",
+        "PATCH /invoices/{id}/issue",
+        "PATCH /invoices/{id}/pay",
+        "PATCH /invoices/{id}/cancel",
+        "GET /monitor/health",
+        "GET /monitor/metrics",
+      ];
+
+      const firstOperation = `${a.get("method").toUpperCase()} ${a.get("path")}`;
+      const secondOperation = `${b.get("method").toUpperCase()} ${b.get("path")}`;
+
+      return order.indexOf(firstOperation) - order.indexOf(secondOperation);
+    },
+  },
+};
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 
 // alle Invoice-Routen unter /invoices
 app.use("/invoices", invoiceRoutes);

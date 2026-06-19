@@ -201,6 +201,32 @@ async function payInvoice(id) {
   return savedInvoice.toObject();
 }
 
+async function cancelInvoice(id) {
+  const invoice = await Invoice.findById(id);
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (invoice.status === "PAID") {
+    const error = new Error("Paid invoices cannot be cancelled.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (invoice.status === "CANCELLED") {
+    const error = new Error("Invoice is already cancelled.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  invoice.status = "CANCELLED";
+  invoice.cancelledAt = new Date();
+
+  const savedInvoice = await invoice.save();
+  return savedInvoice.toObject();
+}
+
 async function deleteInvoice(id) {
   return Invoice.findByIdAndDelete(id).lean();
 }
@@ -210,7 +236,8 @@ module.exports = {
   getInvoiceById,
   createInvoice,
   updateInvoice,
-  deleteInvoice,
   issueInvoice,
   payInvoice,
+  cancelInvoice,
+  deleteInvoice,
 };

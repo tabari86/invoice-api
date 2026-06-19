@@ -39,6 +39,7 @@ This API models invoices with:
 * Final total calculation
 * Invoice status handling
 * Draft invoices can be issued and receive an automatic due date
+* Draft and open invoices can be cancelled when they are no longer valid
 
 New invoices are created as drafts and receive an automatically generated invoice number in the following format:
 
@@ -55,38 +56,41 @@ INV-2026-000001
 
 ## Invoice Lifecycle Rules
 
-The current version includes dedicated lifecycle actions for issuing and paying invoices.
+The current version includes dedicated lifecycle actions for issuing, paying and cancelling invoices.
 
-| Action        | Rule                                         | Result                         |
-| ------------- | -------------------------------------------- | ------------------------------ |
-| Issue invoice | Only `DRAFT` invoices can be issued          | Status changes to `OPEN`       |
-| Issue date    | Set automatically when the invoice is issued | `issuedAt` is stored           |
-| Due date      | Calculated automatically                     | `dueDate = issuedAt + 14 days` |
-| Pay invoice   | Only `OPEN` invoices can be paid             | Status changes to `PAID`       |
-| Payment date  | Set automatically when the invoice is paid   | `paidAt` is stored             |
+| Action            | Rule                                              | Result                         |
+| ----------------- | ------------------------------------------------- | ------------------------------ |
+| Issue invoice     | Only `DRAFT` invoices can be issued               | Status changes to `OPEN`       |
+| Issue date        | Set automatically when the invoice is issued      | `issuedAt` is stored           |
+| Due date          | Calculated automatically                          | `dueDate = issuedAt + 14 days` |
+| Pay invoice       | Only `OPEN` invoices can be paid                  | Status changes to `PAID`       |
+| Payment date      | Set automatically when the invoice is paid        | `paidAt` is stored             |
+| Cancel invoice    | Only `DRAFT` and `OPEN` invoices can be cancelled | Status changes to `CANCELLED`  |
+| Cancellation date | Set automatically when the invoice is cancelled   | `cancelledAt` is stored        |
 
-Cancelled invoice flows are planned as a separate lifecycle endpoint.
+Paid invoices cannot be cancelled directly. A refund or credit-note workflow would be a separate future improvement.
 
 ---
 
 ## Features
 
-| Feature         | Description                                                             |
-| --------------- | ----------------------------------------------------------------------- |
-| Invoice CRUD    | Create, read, update and delete invoices                                |
-| Invoice Numbers | Automatic invoice number generation                                     |
-| Line Items      | Invoices contain one or more billable items                             |
-| Tax Calculation | Automatic subtotal, tax amount and total calculation                    |
-| MongoDB         | Persistent invoice storage with Mongoose                                |
-| Validation      | Request validation with Joi                                             |
-| Swagger         | Interactive OpenAPI documentation                                       |
-| Logging         | HTTP request logging with Morgan and Winston                            |
-| Rate Limiting   | Global and write-operation rate limits                                  |
-| Monitoring      | Health and metrics endpoints                                            |
-| Tests           | Automated API tests with Jest and Supertest                             |
-| Docker          | Containerized application setup                                         |
-| Invoice Issuing | Draft invoices can be issued with automatic issue and due dates         |
-| Invoice Payment | Open invoices can be marked as paid with an automatic payment timestamp |
+| Feature              | Description                                                                   |
+| -------------------- | ----------------------------------------------------------------------------- |
+| Invoice CRUD         | Create, read, update and delete invoices                                      |
+| Invoice Numbers      | Automatic invoice number generation                                           |
+| Line Items           | Invoices contain one or more billable items                                   |
+| Tax Calculation      | Automatic subtotal, tax amount and total calculation                          |
+| MongoDB              | Persistent invoice storage with Mongoose                                      |
+| Validation           | Request validation with Joi                                                   |
+| Swagger              | Interactive OpenAPI documentation                                             |
+| Logging              | HTTP request logging with Morgan and Winston                                  |
+| Rate Limiting        | Global and write-operation rate limits                                        |
+| Monitoring           | Health and metrics endpoints                                                  |
+| Tests                | Automated API tests with Jest and Supertest                                   |
+| Docker               | Containerized application setup                                               |
+| Invoice Issuing      | Draft invoices can be issued with automatic issue and due dates               |
+| Invoice Payment      | Open invoices can be marked as paid with an automatic payment timestamp       |
+| Invoice Cancellation | Draft and open invoices can be cancelled through a dedicated lifecycle action |
 
 ---
 
@@ -146,15 +150,16 @@ http://localhost:3000/api-docs
 
 ### Invoices
 
-| Method | Endpoint              | Description                  |
-| ------ | --------------------- | ---------------------------- |
-| GET    | `/invoices`           | Get all invoices             |
-| GET    | `/invoices/:id`       | Get invoice by ID            |
-| POST   | `/invoices`           | Create a new draft invoice   |
-| PUT    | `/invoices/:id`       | Update editable invoice data |
-| PATCH  | `/invoices/:id/issue` | Issue a draft invoice        |
-| PATCH  | `/invoices/:id/pay`   | Mark an open invoice as paid |
-| DELETE | `/invoices/:id`       | Delete invoice               |
+| Method | Endpoint               | Description                    |
+| ------ | ---------------------- | ------------------------------ |
+| GET    | `/invoices`            | Get all invoices               |
+| GET    | `/invoices/:id`        | Get invoice by ID              |
+| POST   | `/invoices`            | Create a new draft invoice     |
+| PUT    | `/invoices/:id`        | Update editable invoice data   |
+| PATCH  | `/invoices/:id/issue`  | Issue a draft invoice          |
+| PATCH  | `/invoices/:id/pay`    | Mark an open invoice as paid   |
+| PATCH  | `/invoices/:id/cancel` | Cancel a draft or open invoice |
+| DELETE | `/invoices/:id`        | Delete invoice                 |
 
 ### Monitoring
 
@@ -385,6 +390,7 @@ The current version focuses on the core invoice backend:
 * Invoice issuing with automatic due date calculation
 * Open invoices can be marked as paid after they have been issued
 * Invoice payment with automatic payment timestamp
+* Invoice cancellation with automatic cancellation timestamp
 * MongoDB persistence
 * Request validation
 * Swagger documentation
@@ -397,9 +403,7 @@ Invoice cancellation is planned as a dedicated business endpoint instead of bein
 
 Planned endpoints:
 
-```text
-PATCH /invoices/:id/cancel
-```
+Refunds, credit notes and partial payments are intentionally not included in the current scope and may be considered as future improvements.
 
 ---
 

@@ -18,6 +18,7 @@ router.get("/:id", invoiceController.getInvoiceById);
 
 router.patch("/:id/issue", invoiceController.issueInvoice);
 router.patch("/:id/pay", invoiceController.payInvoice);
+router.patch("/:id/cancel", invoiceController.cancelInvoice);
 
 // POST /invoices - mit Validation & Write-Limiter
 router.post(
